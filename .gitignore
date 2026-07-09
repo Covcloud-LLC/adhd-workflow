@@ -3,3 +3,4 @@
 
 # /standup --board regenerates this on demand; not committed by default.
 docs/BOARD.md
+.idea/
