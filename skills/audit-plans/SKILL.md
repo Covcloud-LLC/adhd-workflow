@@ -9,7 +9,7 @@ description: Weekly hygiene audit of docs/plans/ and docs/ideas/ in the current 
 
 ## What to check
 
-Resolve git root. Read `docs/plans/*.md`, `docs/plans/_done/*.md`, and `docs/ideas/*.md`. **`docs/notes/` is out of scope for format checks** — design/decision/reference docs live there; never flag a `docs/notes/` file as a malformed plan or drift. (The one exception: check #9 may flag a reasoning note as *stale* — staleness only, never format.)
+Resolve git root. Read `docs/plans/*.md`, `docs/plans/_done/*.md`, and `docs/ideas/*.md`. Just as `_done/` is excluded from active-plan checks, **any file in `docs/plans/` whose basename begins with `_` is a fixture** — never counted toward WIP, never picked as `▶ NEXT`, never flagged stale, never archived; skip it in every check below. **`docs/notes/` is out of scope for format checks** — design/decision/reference docs live there; never flag a `docs/notes/` file as a malformed plan or drift. (The one exception: check #9 may flag a reasoning note as *stale* — staleness only, never format.)
 
 1. **Format conformance** — every active plan must satisfy the `/promote` rubric: a definition of done, actionable tasks, a `Verify:` clause per task, scoped (~≤8 tasks), a one-line why, and the provider-qualified model header contract. A current plan has:
    - `> Model: <OpenAI|Claude> <model-id> · Effort: <provider-valid effort>` for the recommended default route.
