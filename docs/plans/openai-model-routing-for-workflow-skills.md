@@ -1,6 +1,6 @@
 # OpenAI and Claude model routing for workflow skills — recommend both, then choose
 
-> Status: **todo** · created 2026-07-09
+> Status: **in-progress** · created 2026-07-09 · started 2026-07-09
 > Model: gpt-5.5 · Effort: high
 > OpenAI: gpt-5.5 · high
 > Claude: claude-opus-4-8 · high
