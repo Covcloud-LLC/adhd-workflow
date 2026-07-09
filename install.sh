@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install the ADHD workflow into ~/.codex by symlinking this repo's skills and commands.
+# Install the ADHD workflow into ~/.codex by symlinking this repo's skills and legacy commands.
 # Re-run it any time; it is idempotent. Edits to the repo take effect immediately.
 #
 #   ./install.sh            # symlink, refusing to clobber anything unexpected
@@ -71,5 +71,5 @@ echo
 if [ "$UNINSTALL" -eq 1 ]; then
   echo "Uninstalled. Symlinks pointing elsewhere were left alone."
 else
-  echo "Done. Start a new Codex session, then run /idea in any repo."
+  echo "Done. Start a new Codex session, then run /idea or invoke \$idea in any repo."
 fi

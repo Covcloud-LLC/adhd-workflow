@@ -14,27 +14,31 @@ ideate  →  reason  →  plan  →  execute  →  validate
                                   /pjm)
 ```
 
-Each stage is one slash command (except *execute*, which happens in separate fresh sessions).
-You can run the workflow from Codex or Claude Code; either way, it reads and writes the current
-repo's `docs/`.
+Each stage is one workflow trigger (except *execute*, which happens in separate fresh sessions).
+In Codex, explicitly invoke installed skills with `$skill-name` (for example `$wrap-up`), or use
+the slash list when the skill appears there. You can run the workflow from Codex or Claude Code;
+either way, it reads and writes the current repo's `docs/`.
 
 ---
 
 ## The one-line version of each stage
 
-| Stage | Command | What it does | Where the output goes |
+| Stage | Trigger | What it does | Where the output goes |
 |---|---|---|---|
 | **Ideate** | `/idea` | Dump a raw thought to disk and get out of the way. | `docs/ideas/` |
 | **Reason** | `/reason` | Decide if the idea is sound and how much thinking it needs. | a stamp on the idea (+ maybe a note in `docs/notes/`) |
 | **Plan** | `/promote` | Turn a reasoned idea into a well-formed, runnable plan. | `docs/plans/` |
 | **Execute** | *(fresh session)* | Run the plan's task strings and build the thing. | code |
-| **Validate** | `/wrap-up` | Confirm it's done, capture what you learned, pick the next thing. | plan status + memory |
+| **Validate** | `/wrap-up` / `$wrap-up` | Confirm it's done, capture what you learned, hand back to the driver. | plan status + memory |
 
-Two helper commands sit alongside these:
+Two helper triggers sit alongside these:
 - `/standup` — the daily driver. Picks the ONE next thing to work on, enforces the limit of 2
   things in flight at once.
 - `/pjm` — a project-manager session you keep open for a work block. It drives and tracks; it
   never builds. It hands you task strings to run in fresh Codex or Claude Code sessions.
+  `/pjm run-plan <plan>` can drive one plan slice-by-slice through checkpointed handoffs, but
+  each slice still runs in a fresh execution session and must come back through `/wrap-up`
+  before PJM continues to the next slice.
 - `/design-workshop` — builds a prompt for a separate "critic" session that attacks a hard
   problem before you commit to it. `/reason` calls this when an idea needs it.
 
@@ -183,7 +187,9 @@ build.
 - `/pjm` is a project-manager session you keep open for the day. It re-checks the state every
   turn (you move things between turns), runs the standup pick, puts the task string on your
   clipboard, and tells you which provider route, model, and effort to run it at. It manages; it
-  doesn't build.
+  doesn't build. `/pjm run-plan <plan>` can keep the same plan moving slice-by-slice, but only
+  by stopping at each checkpoint: hand off the next slice, wait for a fresh execution session,
+  then require `/wrap-up` after that slice before the next slice is assigned.
 
 ### Worktrees: keeping parallel sessions out of each other's way
 
@@ -202,13 +208,15 @@ sweep — and one with uncommitted work gets flagged, never deleted.
 
 ## Stage 5 — Validate (`/wrap-up`)
 
-When a slice of work is done, `/wrap-up` is the one command to run. It:
+When a slice of work is done, `/wrap-up` is the trigger to run; in Codex, `$wrap-up` explicitly
+invokes the installed skill. It:
 1. Confirms the slice is actually finished and marks it (a ` ✅` on the slice heading).
 2. Captures what you learned — the gotchas, the decisions — into project memory.
 3. Asks whether the finished work deserves a shipped doc (see **Documents** below) — and if
    the session changed code with no plan or defect behind it, offers a retroactive `/defect`
    or `/idea` so the work still leaves a trace.
-4. Runs `/standup` to name the next thing.
+4. Hands control back to `/pjm`; if the slice came from `/pjm run-plan <plan>`, return to that
+   same PJM session before the next slice is assigned.
 5. Nudges `/audit-plans` only if the backlog looks messy.
 
 `/verify` is the sharper tool underneath: it actually drives the feature end-to-end to confirm the

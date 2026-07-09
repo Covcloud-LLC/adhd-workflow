@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wrap up"
+  short_description: "Finish a plan slice and reconcile status"
+  default_prompt: "Use $wrap-up to reconcile a finished plan slice, capture learnings, and hand next action back to /pjm."

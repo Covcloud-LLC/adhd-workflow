@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this repo is
 
-The ADHD workflow: a set of Claude Code **skills** (plus one command) that carry an idea through
+The ADHD workflow: a set of Claude Code **skills** that carry an idea through
 five stages — `ideate → reason → plan → execute → validate` — via `/idea`, `/reason`, `/promote`,
 fresh execution sessions, and `/wrap-up`. It is published for other people to install.
 
@@ -12,9 +12,9 @@ There is **no application code, no build, and no test suite.** Every artifact is
 "product" is the prose inside `skills/*/SKILL.md`.
 
 ```
-skills/<name>/SKILL.md   the 11 skills — this is the product
-commands/wrap-up.md      the one slash command that isn't a skill
-install.sh               symlinks skills + commands into ~/.claude
+skills/<name>/SKILL.md   the 12 skills — this is the product
+commands/wrap-up.md      legacy command copy for surfaces that still load command prompts
+install.sh               symlinks skills, plus legacy command copies
 docs/                    this repo's own ideas/notes/plans (see "Dogfooding")
 ```
 

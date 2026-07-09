@@ -1,26 +1,30 @@
 ---
 name: standup
-description: The daily ADHD driver. Reviews plans in the current repo, enforces the WIP=2 limit, flags stalled/drifted plans via git, sweeps for untracked work and open defects, archives completed ones, and ends by naming ONE next action. With an argument (/standup <feature>) it instead traces that feature across ideas/notes/plans/defects/branches and reports its lifecycle position + the single next command. Use when the user types /standup, or says "what should I work on", "daily standup", "where did I leave off", "what's in flight", "where is <feature> at". Part of the ADHD project-workflow system (see [[idea]], [[promote]], [[defect]], [[audit-plans]]).
+description: The daily ADHD driver. Reviews plans in the current repo, enforces the WIP=2 limit, flags stalled/drifted plans via git, sweeps for untracked work and open defects, archives completed ones, and ends by naming ONE next action. With an argument (/standup <feature-or-plan>) it instead traces that item across ideas/notes/plans/defects/branches and reports its lifecycle position + the single next command without starting or advancing it. Use when the user types /standup, or says "what should I work on", "daily standup", "where did I leave off", "what's in flight", "where is <feature> at". Part of the ADHD project-workflow system (see [[idea]], [[promote]], [[defect]], [[audit-plans]]).
 ---
 
 # Daily standup (single repo)
 
 The user has ADHD: too many open loops, novelty bias, weak task object-permanence. This ritual fights all three. It runs against the **current repo** (the user runs it per-repo). The cardinal rule: **end by naming ONE next action, not a menu.** A list is a re-decision tax the user pays by doing nothing.
 
-## Feature trace mode: `/standup <feature>`
+## Feature trace mode: `/standup <feature-or-plan>`
 
-If the user passes an argument (`/standup <term>`) — other than the `--board` flag below — **skip the board review entirely** and answer "where is this feature and what's its next command?":
+If the user passes an argument (`/standup <term>`) — other than the `--board` flag below — **skip the board review entirely** and answer "where is this item in the lifecycle and what's its next command?":
 
-1. Search for the term (case-insensitive, incl. obvious slug variants) across `docs/ideas/`, `docs/notes/`, `docs/plans/` (**including `_done/`**), `docs/defects/`, and git branch names (`git branch -a`).
-2. From the hits, place the feature in the lifecycle: captured (idea only) → reasoned (idea has a `reasoned:` stamp / a reasoning note exists) → promoted (plan exists, `todo`) → in-progress (plan `in-progress` / matching branch) → done (in `_done/`); defects layer on top (open / diagnosed / fixed).
-3. Report the position in one line (e.g. "reasoned, unpromoted") plus the evidence paths, and name the **SINGLE next command** in the lifecycle (`/reason`, `/promote`, `/standup` to start it, `/diagnose`, `/wrap-up`, …). No board output, no `▶ NEXT` pick.
-4. If nothing matches, say so and suggest the closest-named items found.
+1. Search for the term (case-insensitive, incl. obvious slug variants) across `docs/ideas/`, `docs/notes/`, `docs/plans/` (**including `_done/`**), `docs/defects/`, and git branch names (`git branch -a`). If it matches a plan slug/path, treat the plan file as the primary evidence and include its current status, slice count, and first open slice title so `/pjm run-plan <plan>` can locate the target without re-doing discovery.
+2. From the hits, place the item in the lifecycle: captured (idea only) → reasoned (idea has a `reasoned:` stamp / a reasoning note exists) → promoted (plan exists, `todo`) → in-progress (plan `in-progress` / matching branch) → done (in `_done/`); defects layer on top (open / diagnosed / fixed).
+3. Report the position in one line (e.g. "reasoned, unpromoted") plus the evidence paths, and
+   name the **SINGLE next command** in the lifecycle (`/reason`, `/promote`, plain `/standup` for
+   the global start/pick, `/pjm run-plan <plan>` for a PJM-targeted plan lane, `/diagnose`,
+   `/wrap-up`, …). No board output, no `▶ NEXT` pick.
+4. Trace mode is read-only. It must not flip `todo`→`in-progress`, mark a slice done, archive a plan, select a repo-wide `▶ NEXT`, or treat `/standup <plan>` as a request to start or advance that plan. Starting a plan remains a confirmed action from the normal global standup pick, and slice completion remains `/wrap-up`.
+5. If nothing matches, say so and suggest the closest-named items found.
 
 Output shape for trace mode:
 
 ```
 ◎ <term>: <lifecycle position>
-  evidence: <path(s)> · branch <name> (if any)
+  evidence: <path(s)> · branch <name> (if any) · plan status/slices (if matched)
 → next: /<command> <target>
 ```
 
@@ -37,9 +41,11 @@ Output shape for trace mode:
 5. **Amnesty sweep (untracked work):** scan recent git activity — branches and commits from the last **~14 days** (`git log --since="14 days ago" --format="%h %cr %s"` plus `git for-each-ref --sort=-committerdate refs/heads/`) — for work that matches **no plan** in `docs/plans/` and **no defect** in `docs/defects/`. Report matches under a `⊘ UNTRACKED` section and **offer** to backfill: a plan stub via the normal format, or a defect file if it's bug-shaped — stamped as retroactive capture (e.g. `> Backfilled retroactively by /standup amnesty sweep, <date>`). Rules: **never scold** (this is amnesty, not enforcement), **never auto-write** (offer only, write on confirmation), and always allow a batch **"dismiss all"** so chore/noise commits don't nag every standup. Keep the section compact — group related commits into one line per apparent piece of work.
 6. **Defect sweep:** read `docs/defects/*.md` (skip if the dir doesn't exist). Note each defect's status/severity. Two classes **compete for the `▶ NEXT` pick**: open **blocker/high-severity** defects, and **`diagnosed`** defects with a ready recommended fix. Summarize the rest on a `✚ DEFECTS` line (counts by status).
 7. **Completion check:** any plan whose slices are all ` ✅` (or delegated/dropped) → recommend `git mv` to `docs/plans/_done/` and offer to do it.
-8. **Pick the ONE next action** (priority order). Echo the owning plan's `Model` + `Effort` on
-   the `▶ NEXT` line so a fresh session can run it at the right setting without reopening the
-   plan. If the plan carries provider-specific routes, report both routes and the chosen default
+8. **Pick the ONE next action globally** (priority order). This is the repo-wide `▶ NEXT` pick
+   that `/pjm` may use as its analysis engine; do not narrow it to a named plan unless that plan
+   already wins under the same WIP, nearest-finish-line, defect, drift, and completion rules. Echo
+   the owning plan's `Model` + `Effort` on the `▶ NEXT` line so a fresh session can run it at the
+   right setting without reopening the plan. If the plan carries provider-specific routes, report both routes and the chosen default
    (e.g. Codex/OpenAI `gpt-5.5 · high`; Claude Code `claude-opus-4-8 · high`;
    default Codex/OpenAI).
    If the plan is missing model/effort fields, say so and suggest `/audit-plans`.
@@ -84,7 +90,7 @@ Rules:
 - **Anti-churn guarantee: a routine `/standup` with no flag writes NO file.** Only an explicit `--board` touches disk, so plain daily standups never dirty the working tree.
 - Relationship to a hand-maintained per-project index (e.g. workbench's `docs/plans/00-master-index.md`): `--board` is the generated equivalent; the two may coexist, and converging them is out of scope here.
 
-Omit any section that's empty. Keep it scannable. The `▶ NEXT` line is mandatory and always first. (Trace mode `/standup <feature>` uses its own shape above instead.)
+Omit any section that's empty. Keep it scannable. The `▶ NEXT` line is mandatory and always first. (Trace mode `/standup <feature-or-plan>` uses its own shape above instead.)
 
 ## Rules
 
