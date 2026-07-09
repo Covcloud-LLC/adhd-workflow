@@ -1,6 +1,6 @@
 ---
 name: pjm
-description: Enter project-manager mode for a long-running work session. A stance + per-turn loop wrapped around /standup — you DRIVE and TRACK work, you do NOT execute it; execution is delegated to fresh Codex or Claude Code sessions via pbcopy'd task strings. Use when the user types /pjm, or says "be my project manager", "run the PM session", "manage my work today", "start my work day". Part of the ADHD project-workflow system (see [[standup]], [[idea]], [[promote]], [[wrap-up]], [[audit-plans]]).
+description: Enter project-manager mode for a long-running work session. A stance + per-turn loop wrapped around /standup — you DRIVE and TRACK work, you do NOT execute it; execution is delegated to fresh Codex or Claude Code sessions via pbcopy'd task strings. Use when the user types /pjm, /pjm run-plan <plan>, or says "be my project manager", "run the PM session", "manage my work today", "start my work day", "orchestrate this plan". Part of the ADHD project-workflow system (see [[standup]], [[idea]], [[promote]], [[wrap-up]], [[audit-plans]]).
 ---
 
 # /pjm — project-manager session
@@ -67,6 +67,71 @@ memory). Never trust the state from earlier in the conversation. At the start of
 5. **Offer to set up the branch** for the chosen slice (see below). Don't cut it silently — offer,
    then act on yes.
 
+## Plan orchestration mode (on `/pjm run-plan <plan>` / "orchestrate this plan")
+
+This mode is a checkpointed PM loop for **one named plan**. It manages and delegates the plan's
+slices; it does not build them. If no plan is named, stop and ask for the plan slug/path. Do not
+turn this into a repo-wide standup or a fully autonomous executor.
+
+At the start of **every** orchestration turn, re-sweep state before choosing or confirming anything:
+
+- Re-run the normal git sweep (`git branch --show-current`, `git status --short`, and the
+  branch-vs-`origin/main` count when available).
+- Re-read the target plan's header, provider route lines, status, slice headings, task strings,
+  and ` ✅` markers.
+- Re-read the repo WIP set, because the WIP=2 cap is global even when this mode targets one plan.
+
+Use `/standup` rules inside the target-plan lane: WIP=2, nearest finish line wins, one next action,
+stalled/drift checks, branch/merge checks, and completion checks. If the target plan is blocked by
+two other in-progress plans, say so and drive the nearest finish line instead of starting another
+slice. If the target plan has an in-flight slice or branch, closing that beats opening a new slice.
+
+The orchestration loop is:
+
+1. Re-sweep the target plan and repo state.
+2. Pick the next allowed action using `/standup` rules, narrowed to the named plan unless global
+   WIP or an unmerged in-flight branch forces a nearer finish line. Within the named plan, find
+   the **first slice heading not marked ` ✅`** and use that slice's verbatim `task:` string as the
+   execution handoff.
+3. Prepare the handoff exactly:
+   - Copy the verbatim `task:` string to the clipboard with `pbcopy`.
+   - Show the same task string inline in the PJM response so the user can inspect what was copied.
+   - Echo both provider routes from the plan (`OpenAI` and `Claude`) plus the `Recommended`
+     default. Include model, effort, chosen default, and the one-line reason if the plan gives one
+     or the PJM session is making an override call.
+   - Offer branch setup using the existing Branch mechanics below: in-place checkout or isolated
+     worktree, with the normal recommendation rules. Do not create either one until the user says
+     yes.
+   - If the user chooses an isolated worktree, re-copy the task after the worktree is created and
+     prefix the copied handoff with the worktree path, e.g. `cd ../<repo>-wt-<plan-id> first.`
+     followed by the verbatim `task:` string. Show that prefixed handoff inline too.
+4. The fresh execution session runs the copied task. When it finishes, that execution session runs
+   `/wrap-up`; **`/wrap-up` is the only path that marks a slice heading done.** This mode must not
+   append ` ✅`, silently change a slice to done, or archive a plan as a substitute for `/wrap-up`.
+5. After `/wrap-up`, the user returns to this same PJM session and asks to continue the
+   `/pjm run-plan <plan>` loop. On resume, re-sweep the target plan and repo again; do not trust
+   the prior turn's state or the execution session's summary.
+6. If another open slice remains, hand off the next first-open slice by repeating this loop. If all
+   slice headings in the named plan are marked ` ✅`, do not invent more work: offer plan
+   completion/archive handling, including any status edit, commit/push, branch prune, or
+   `docs/plans/_done/` move that the normal confirmation rules require.
+
+Stop and ask at every checkpoint that needs judgment:
+
+- **Failed verify:** do not continue to the next slice; hand the failure back to execution or ask
+  whether to diagnose.
+- **Dirty worktree:** surface the files and ask before status edits, branch moves, commits, pushes,
+  or archive actions.
+- **Missing route/model header:** stop until the plan has `Model`/`Effort` and provider route lines
+  (`OpenAI`, `Claude`, `Recommended`) or the user explicitly asks for a plan-edit handoff.
+- **Blocked slice:** do not skip around it unless `/standup` rules identify a nearer legitimate
+  finish line; capture the blocker and ask what route to take.
+- **Branch/merge ambiguity:** stop when the current branch, target slice branch, PR/merge state, or
+  ahead/behind counts do not clearly identify the safe next action.
+- **Status/commit/push/archive confirmation:** ask before changing plan status, committing,
+  pushing, archiving a completed plan, pruning branches, or removing worktrees. A yes for one
+  operation is not standing approval for later operations.
+
 ## Branch mechanics
 
 - Name: `feature/<plan-id>-<slug>` (e.g. `feature/07.3-formatters`), matching the user's existing
@@ -125,9 +190,12 @@ state that the task is on the clipboard and give the model/effort rec + branch o
 ## Rules
 
 - Manage, don't build. Delegate execution via the pbcopy'd task string.
+- `/pjm run-plan <plan>` targets one named plan, re-sweeps every turn, and still inherits
+  `/standup`'s WIP, drift, stalled, nearest-finish-line, and completion rules.
 - Re-sweep every turn; the user moved things since you last looked.
 - One next action, never a menu (inherited from `/standup`).
 - Don't relax WIP=2 or invent work outside a plan.
+- Never mark a slice done directly; `/wrap-up` is the only slice-completion path.
 - Never auto-commit/push; never cut or delete a branch without offering first.
 - At day-close, run the PJM Day-close steps — never `/wrap-up` (that's the execution-side,
   slice-level ritual; using it here loops, since it defers next-action back to `/pjm`).

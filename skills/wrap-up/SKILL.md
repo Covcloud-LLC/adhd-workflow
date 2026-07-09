@@ -1,3 +1,8 @@
+---
+name: wrap-up
+description: End-of-task umbrella ritual for finishing a plan slice in the current repo. Use when the user types /wrap-up, invokes $wrap-up, says "wrap up this slice", "finish this task", "mark this slice done", or needs to reconcile completed execution work. Confirms before changing status, captures knowledge, queues shipped-doc work, and hands the next action back to /pjm. Part of the ADHD project-workflow system (see [[standup]], [[pjm]], [[draft-spec]], [[draft-guide]], [[audit-plans]]).
+---
+
 # Wrap Up
 
 End-of-task **umbrella** ritual — the one trigger to run when you finish a task (a plan
@@ -36,8 +41,8 @@ confirmation. Only persist things actually discussed or demonstrated — never f
   step gated on the user's confirmation, per the cardinal rule:
   1. Ensure the work is **committed on the slice branch** (offer the commit; never commit
      silently — global git rule applies).
-  2. Hand back to the **main checkout** for merge/PR/push — **never merge or push silently**;
-     offer the merge, PR, or push step and let the user drive it.
+  2. Hand back to the **main checkout** for merge/PR — **never merge silently**; offer the
+     merge or PR step and let the user drive it.
   3. Once the branch is merged or pushed, offer `git worktree remove <path>` (+ pruning the
      branch if merged).
   If the worktree still has **uncommitted changes**, flag it plainly and stop there — **never
@@ -94,15 +99,8 @@ The **`/pjm`** session is the single driver of "what's next" (next-action pick, 
 model/effort rec, branch setup — it wraps `/standup` for the analysis). **Do NOT run `/standup`
 here.** A wrap-up in an execution session that also names the next action competes with `/pjm` to
 drive — the exact re-decision tax the system fights — and tempts this session into *starting* the
-next slice, breaking the execute-elsewhere separation.
-
-If this slice came from **`/pjm run-plan <plan>`**, end by telling the user: reconcile + capture
-done — return to that same `/pjm` session and continue the same plan-run loop for `<plan>`. Do
-not start a fresh PJM session, do not let wrap-up pick the next slice, and do not ask the user to
-run a plain "what's next?" standup-style decision.
-
-Otherwise, end by telling the user: reconcile + capture done — switch to your `/pjm` session and
-ask "what's next?".
+next slice, breaking the execute-elsewhere separation. End by telling the user: reconcile +
+capture done — switch to your `/pjm` session and ask "what's next?".
 
 **Fallback:** if the user says they're not running a `/pjm` session, invoke the **`standup`**
 skill here instead — it owns the `▶ NEXT` line (paste-ready `task:` string + default route,
@@ -123,8 +121,7 @@ recommended it.
   persisting, say so — that's fine.
 - Doc tasks queued (audience · mode · source paths), noting whether any is a completion-blocking
   spec task. If none qualified, omit this line.
-- The next-action hand-off: point the user to their `/pjm` session; if the slice came from
-  `/pjm run-plan <plan>`, explicitly tell them to return to that same session and continue the
-  same plan-run loop for `<plan>` (or, in the fallback case, the `▶ NEXT` line from standup,
-  including the OpenAI route, Claude route, and chosen default when the plan carries them).
+- The next-action hand-off: point the user to their `/pjm` session (or, in the fallback case,
+  the `▶ NEXT` line from standup, including the OpenAI route, Claude route, and chosen default
+  when the plan carries them).
 - The audit-plans nudge, if triggered.
