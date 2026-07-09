@@ -8,13 +8,18 @@ The ADHD workflow: a set of Claude Code **skills** that carry an idea through
 five stages — `ideate → reason → plan → execute → validate` — via `/idea`, `/reason`, `/promote`,
 fresh execution sessions, and `/wrap-up`. It is published for other people to install.
 
-There is **no application code, no build, and no test suite.** Every artifact is markdown. The
-"product" is the prose inside `skills/*/SKILL.md`.
+The "product" is the prose inside `skills/*/SKILL.md`. The repo also carries one piece of real
+code: the **slice gate** (`scripts/slice-gate.sh`), the machine witness `/run-plan` uses to mark
+slices done, with its test suite in `tests/gate_test.sh`. There is still no build; the whole-tree
+check is `bash scripts/check.sh`.
 
 ```
-skills/<name>/SKILL.md   the 12 skills — this is the product
+skills/<name>/SKILL.md   the skills — this is the product
 commands/wrap-up.md      legacy command copy for surfaces that still load command prompts
 install.sh               symlinks skills, plus legacy command copies
+scripts/slice-gate.sh    the slice gate — see docs/notes/slice-gate-convention.md
+scripts/check.sh         the whole-tree check: shell syntax + the gate's tests
+tests/gate_test.sh       the gate's test suite (bash tests/gate_test.sh)
 docs/                    this repo's own ideas/notes/plans (see "Dogfooding")
 ```
 
@@ -63,6 +68,7 @@ Changing any of these means changing several skills at once:
 | `Model` + `Effort` header on a plan | what tier to execute it at | `/promote` | `/standup`, `/audit-plans` |
 | WIP cap of 2 `in-progress` plans | the finish-what-you-start rule | — | `/standup` (the only place a plan goes `in-progress`) |
 | `docs/plans/_done/` | completed plans are archived, never deleted | `/wrap-up` | `/audit-plans` |
+| the slice gate — `scripts/slice-gate.sh` | the five machine facts behind a machine-written ` ✅`; see `docs/notes/slice-gate-convention.md` | orchestrator only (never a subagent) | `/run-plan`, `/wrap-up` |
 
 `docs/plans/` is **task-tracked work only.** Design, decision, and reference docs go in
 `docs/notes/`.
@@ -82,12 +88,16 @@ they're a record of what was done at the time.
 
 ## Verifying a change
 
-The only executable thing here is `install.sh`. Test it against a throwaway config dir rather than
-the real `~/.claude`:
+The whole-tree check is `bash scripts/check.sh` — it syntax-checks the shell scripts and runs the
+gate's test suite (`bash tests/gate_test.sh`). Run it after touching anything under `scripts/` or
+`tests/`.
+
+For `install.sh`, test against a throwaway config dir rather than the real `~/.claude` (the
+installer reads `CODEX_HOME`):
 
 ```bash
-bash -n install.sh                                # syntax
-CLAUDE_CONFIG_DIR=$(mktemp -d) ./install.sh       # link into a sandbox
+bash -n install.sh                        # syntax
+CODEX_HOME=$(mktemp -d) ./install.sh      # link into a sandbox
 ```
 
 Exercise the paths that matter: a clean install, an idempotent re-run, a conflicting existing
