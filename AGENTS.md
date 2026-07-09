@@ -14,13 +14,13 @@ There is **no application code, no build, and no test suite.** Every artifact is
 ```
 skills/<name>/SKILL.md   the 11 skills — this is the product
 commands/wrap-up.md      the one slash command that isn't a skill
-install.sh               symlinks skills + commands into ~/.Codex
+install.sh               symlinks skills + commands into ~/.codex
 docs/                    this repo's own ideas/notes/plans (see "Dogfooding")
 ```
 
 ## The critical gotcha: edits here are live
 
-`install.sh` **symlinks** `skills/<name>` into `~/.Codex/skills/<name>`. The user's own daily
+`install.sh` **symlinks** `skills/<name>` into `${CODEX_HOME:-~/.codex}/skills/<name>`. The user's own daily
 workflow, in every repo they open, runs from these files. There is no build step and no staging
 copy — editing a skill here changes the user's next session.
 
@@ -83,11 +83,11 @@ they're a record of what was done at the time.
 ## Verifying a change
 
 The only executable thing here is `install.sh`. Test it against a throwaway config dir rather than
-the real `~/.Codex`:
+the real `~/.codex`:
 
 ```bash
 bash -n install.sh                                # syntax
-CLAUDE_CONFIG_DIR=$(mktemp -d) ./install.sh       # link into a sandbox
+CODEX_HOME=$(mktemp -d) ./install.sh             # link into a sandbox
 ```
 
 Exercise the paths that matter: a clean install, an idempotent re-run, a conflicting existing
