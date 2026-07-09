@@ -1,6 +1,6 @@
 # The ADHD Workflow
 
-A set of Claude Code skills that take an idea from "I just thought of this" to "it's shipped"
+A set of Codex skills that take an idea from "I just thought of this" to "it's shipped"
 without it getting lost or half-built along the way.
 
 It is built for the way a lot of us actually work: lots of ideas, easy to start things, hard to
@@ -21,7 +21,7 @@ ideate  →  reason  →  plan  →  execute  →  validate
 
 ## Install
 
-Requires [Claude Code](https://claude.com/claude-code).
+Requires Codex.
 
 ```bash
 git clone https://github.com/<you>/adhd-workflow.git
@@ -29,9 +29,9 @@ cd adhd-workflow
 ./install.sh
 ```
 
-The script symlinks each skill into `~/.claude/skills/` and `/wrap-up` into `~/.claude/commands/`,
+The script symlinks each skill into `${CODEX_HOME:-~/.codex}/skills/` and `/wrap-up` into `${CODEX_HOME:-~/.codex}/commands/`,
 so the skills are available in **every** repo you open. This repo stays the source of truth — edit
-a skill here and the change is live in your next session. Start a new Claude Code session, then
+a skill here and the change is live in your next session. Start a new Codex session, then
 type `/idea` in any project.
 
 Use `--force` to replace files already at those paths (they get backed up to `<name>.bak`), and
