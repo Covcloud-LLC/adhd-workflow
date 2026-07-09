@@ -5,11 +5,16 @@ description: The reasoning gate between capture and planning. Triages an idea in
 
 # /reason — the reasoning gate (ideate → **reason** → plan)
 
-**Run this at Opus.** This is judgment work: deciding whether an idea is the right thing to
-build, built the right way, and how much thinking it needs before it earns a plan. It sits
-between `/idea` (capture) and `/promote` (plan). Its whole job is to make sure **no idea reaches
-a plan un-reasoned** — while keeping that requirement nearly free for the ideas that don't need
-much.
+**Run guidance.** This is judgment work: deciding whether an idea is the right thing to build,
+built the right way, and how much thinking it needs before it earns a plan. In Codex/OpenAI, run
+normal passes at `gpt-5.5 · high`. In Claude Code, run normal passes at
+`claude-opus-4-8 · high`. Default recommendation when both are available: Codex/OpenAI
+`gpt-5.5 · high`. Mention `claude-fable-5 · high` only for larger long-running autonomous work
+where it is available; this gate is usually short judgment, not execution.
+
+It sits between `/idea` (capture) and `/promote` (plan). Its whole job is to make sure **no idea
+reaches a plan un-reasoned** — while keeping that requirement nearly free for the ideas that don't
+need much.
 
 The power is in *requiring* the step; the minimalism is in *scaling* it. Most ideas are `clear`
 and pass through in seconds. A few are load-bearing and get held back until they're stress-tested.
@@ -51,7 +56,7 @@ When both are uncertain, run design first (it can change what you build), then a
      Stamp `reasoned: notes/<slug>-reasoning.md`. Tell the user it's ready to `/promote`.
    - **workshop-required** → Do NOT write a note or a plan. Pick the flavor(s). Invoke the
      `design-workshop` skill, passing the problem **and the flavor**, so it builds and pbcopies
-     the adversarial kickoff for a separate Opus session. Stamp
+     the adversarial kickoff for a separate provider-qualified workshop session. Stamp
      `reasoned: workshop-pending (<flavor>)`. Stop. The idea is blocked from `/promote` until the
      user runs the workshop and comes back.
 4. **After a workshop** (user returns with the synthesis): they re-run `/reason` on the same

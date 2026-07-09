@@ -1,14 +1,22 @@
 ---
 name: design-workshop
-description: Generate a grounded, adversarial critic kickoff prompt to paste into a SEPARATE Opus workshop session — for stress-testing a hard problem before committing. Two flavors: design (UX/product) and architecture (solution/implementation correctness). Use when the user types /design-workshop, or says "run an adversarial design workshop", "stress-test this design idea", "workshop this architecture", "kick off a critic session", "is my solution approach sound". Generates + pbcopies the prompt; it does NOT run the workshop in this session. Often invoked by [[reason]] for a workshop-required idea.
+description: Generate a grounded, adversarial critic kickoff prompt to paste into a SEPARATE provider-qualified workshop session — for stress-testing a hard problem before committing. Two flavors: design (UX/product) and architecture (solution/implementation correctness). Use when the user types /design-workshop, or says "run an adversarial design workshop", "stress-test this design idea", "workshop this architecture", "kick off a critic session", "is my solution approach sound". Generates + pbcopies the prompt; it does NOT run the workshop in this session. Often invoked by [[reason]] for a workshop-required idea.
 ---
 
 # /design-workshop — adversarial critic kickoff
 
-Builds a **self-contained grounding prompt** for a separate **Opus** thinking-partner session that
-stress-tests a hard problem. The user runs the actual workshop in a fresh Opus session; this
-skill only assembles the prompt and puts it on the clipboard (long prompts copy unreliably out of
-the terminal).
+Builds a **self-contained grounding prompt** for a separate thinking-partner session that
+stress-tests a hard problem. In Codex/OpenAI, run the workshop at `gpt-5.5 · high`. In Claude
+Code, run it at `claude-opus-4-8 · high`. Default recommendation when both are available:
+Codex/OpenAI `gpt-5.5 · high`. The user runs the actual workshop in a fresh session; this skill
+only assembles the prompt and puts it on the clipboard (long prompts copy unreliably out of the
+terminal).
+
+For the rare deepest one-shot workshop case, use `gpt-5.5 · xhigh` in Codex/OpenAI or
+`claude-opus-4-8 · xhigh` in Claude Code. Use Claude-only max only when the workshop explicitly
+needs session-only deepest reasoning. Mention `claude-fable-5 · high` only for larger
+long-running autonomous work where it is available; this workshop is a few turns of judgment, not
+autonomous execution.
 
 **This skill does NOT run the workshop.** It produces the prompt and stops. Do not start critiquing
 the problem here.
@@ -51,9 +59,11 @@ block and the HOW TO RUN bullets in the template below — everything else (READ
    `{SLOTS}`, and keep the READING LEVEL and opening lines **verbatim** — they are the reusable
    core.
 4. **`pbcopy` it AND print it inline** (`… | pbcopy`, then show the full text).
-5. **Tell the user how to run it:** paste as the first message to a fresh **Opus** session
-   (`claude-opus-4-8`) at **high** reasoning effort (extended thinking ON if it's the claude.ai
-   app). Bump to **xhigh** for a single deep one-shot, then drop back to high.
+5. **Tell the user how to run it:** paste as the first message to a fresh workshop session.
+   Codex/OpenAI route: `gpt-5.5 · high`. Claude Code route: `claude-opus-4-8 · high`. Default
+   recommendation when both are available: Codex/OpenAI `gpt-5.5 · high`. Bump to
+   `gpt-5.5 · xhigh` or `claude-opus-4-8 · xhigh` only for a single deep one-shot; use
+   Claude-only max only when the workshop explicitly needs session-only deepest reasoning.
 
 ## The prompt template
 
@@ -145,12 +155,14 @@ HOW TO RUN THIS SESSION:
 - **Pick the flavor deliberately** (design vs architecture); it swaps the ROLE and HOW TO RUN
   blocks. When both are uncertain, do a design pass first (it can change *what* you build), then an
   architecture pass on the chosen shape. When invoked by `/reason`, use the flavor it hands you.
-- Recommend **Opus · high** every time. This is judgment with wide latitude, not spec'd execution
-  — the top reasoning tier earns its keep, and a workshop is only a few turns so the cost is
-  trivial.
-- The **READING LEVEL** block stays verbatim and is non-negotiable. It exists because Opus at high
-  effort defaults to a register that reads as masters/post-doc level; without this block the user
-  has to keep asking it to "dumb it down."
+- Recommend provider-qualified high reasoning every time: Codex/OpenAI `gpt-5.5 · high`, or
+  Claude Code `claude-opus-4-8 · high`. Default recommendation when both are available:
+  Codex/OpenAI `gpt-5.5 · high`. This is judgment with wide latitude, not spec'd execution, and a
+  workshop is only a few turns so the cost is trivial. Reserve `gpt-5.5 · xhigh`,
+  `claude-opus-4-8 · xhigh`, or Claude-only max for the rare deepest one-shot case.
+- The **READING LEVEL** block stays verbatim and is non-negotiable. It exists because high-effort
+  critic sessions can default to a register that reads as masters/post-doc level; without this
+  block the user has to keep asking it to "dumb it down."
 - **Self-contained:** the workshop session cannot read the repo — inline the grounding, distilled.
 - **Adversarial by default:** the prompt makes the critic break the user's ideas, not flatter them.
   An agreeable model on a "make it simple" problem produces mush.

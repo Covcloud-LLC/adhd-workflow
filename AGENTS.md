@@ -6,7 +6,9 @@ Guidance for Codex when working in this repository.
 
 The ADHD workflow: a set of Codex **skills** (plus one command) that carry an idea through
 five stages — `ideate → reason → plan → execute → validate` — via `/idea`, `/reason`, `/promote`,
-fresh execution sessions, and `/wrap-up`. It is published for other people to install.
+fresh execution sessions, and `/wrap-up`. It is published for other people to install. The
+installed package is Codex-native, but live workflow prose should make execution handoffs portable
+between Codex/OpenAI and Claude Code when both routes are relevant.
 
 There is **no application code, no build, and no test suite.** Every artifact is markdown. The
 "product" is the prose inside `skills/*/SKILL.md`.
@@ -60,7 +62,8 @@ Changing any of these means changing several skills at once:
 |---|---|---|---|
 | `reasoned:` frontmatter stamp on an idea | passed the reasoning gate | `/reason` | `/promote` |
 | trailing ` ✅` on a `### <id>` slice heading | that slice is done | `/wrap-up` | `/standup` |
-| `Model` + `Effort` header on a plan | what tier to execute it at | `/promote` | `/standup`, `/audit-plans` |
+| `Model` + `Effort` header on a plan | default runtime route + provider-aware reasoning budget | `/promote` | `/standup`, `/audit-plans` |
+| `OpenAI` + `Claude` + `Recommended` route lines | provider-specific routes and the chosen default | `/promote` | `/standup`, `/pjm`, `/audit-plans` |
 | WIP cap of 2 `in-progress` plans | the finish-what-you-start rule | — | `/standup` (the only place a plan goes `in-progress`) |
 | `docs/plans/_done/` | completed plans are archived, never deleted | `/wrap-up` | `/audit-plans` |
 
@@ -75,6 +78,10 @@ stay well-formed.
 
 To change a skill, capture the idea with `/idea` and run `/reason` on it first, rather than
 editing the skill directly. The one exception is a typo or broken link.
+
+When editing current live workflow behavior, make the surface explicit: Codex/OpenAI route, Claude
+Code route, and the recommended default between them. Don't mechanically replace every "Claude
+session" with "Codex session"; if a passage is describing the Claude Code path, say that.
 
 Note that the archived plans in `docs/plans/_done/` describe editing paths under `~/.Codex/…`.
 That is historical: the skills lived in a dotfiles repo before this one. Don't "fix" those paths —

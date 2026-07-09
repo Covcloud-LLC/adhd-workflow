@@ -1,7 +1,8 @@
 # The ADHD Workflow
 
-A set of Codex skills that take an idea from "I just thought of this" to "it's shipped"
-without it getting lost or half-built along the way.
+A set of workflow skills that take an idea from "I just thought of this" to "it's shipped"
+without it getting lost or half-built along the way. They install as Codex skills/commands, and
+the workflow handoffs are written so the execution path can run from Codex or Claude Code.
 
 It is built for the way a lot of us actually work: lots of ideas, easy to start things, hard to
 finish them. Every command in it either **lowers the friction of capturing** an idea or **raises
@@ -21,7 +22,7 @@ ideate  →  reason  →  plan  →  execute  →  validate
 
 ## Install
 
-Requires Codex.
+Requires Codex for the installer below.
 
 ```bash
 git clone https://github.com/<you>/adhd-workflow.git
@@ -30,9 +31,9 @@ cd adhd-workflow
 ```
 
 The script symlinks each skill into `${CODEX_HOME:-~/.codex}/skills/` and `/wrap-up` into `${CODEX_HOME:-~/.codex}/commands/`,
-so the skills are available in **every** repo you open. This repo stays the source of truth — edit
-a skill here and the change is live in your next session. Start a new Codex session, then
-type `/idea` in any project.
+so the skills are available in **every** repo you open from Codex. This repo stays the source of
+truth — edit a skill here and the change is live in your next session. Start a new Codex session,
+then type `/idea` in any project.
 
 Use `--force` to replace files already at those paths (they get backed up to `<name>.bak`), and
 `--uninstall` to remove the symlinks.
@@ -52,7 +53,7 @@ Plus the supporting cast:
 - `/standup` — the daily driver. Names the ONE next action, enforces a limit of 2 things in
   flight at once, flags plans that have gone stale.
 - `/pjm` — a project-manager session you keep open for a work block. It drives and tracks; it
-  never builds. It hands you task strings to paste into fresh sessions.
+  never builds. It hands you task strings to paste into fresh Codex or Claude Code sessions.
 - `/design-workshop` — builds a prompt for a separate "critic" session that attacks a hard
   problem before you commit to it. `/reason` calls this when an idea needs it.
 - `/audit-plans` — a weekly hygiene pass over the backlog.
@@ -62,6 +63,10 @@ Plus the supporting cast:
 
 Everything reads and writes the **current repo's** `docs/` directory. Nothing is global except
 the skills themselves.
+
+Model-sensitive handoffs are provider-qualified. A plan should name an OpenAI route, a Claude
+route, and a recommended default between them for the surface you're using, for example Codex/OpenAI
+`gpt-5.5 · high` or Claude Code `claude-opus-4-8 · high`.
 
 ## The one idea worth stealing
 

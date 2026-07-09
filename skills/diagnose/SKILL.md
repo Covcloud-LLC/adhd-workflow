@@ -5,10 +5,15 @@ description: Investigate a captured defect in docs/defects/, find the ROOT CAUSE
 
 # /diagnose — root-cause a defect + recommend a fix
 
-**Run at Opus.** This is investigation and judgment, not pattern-matching: reproduce the failure,
-trace it to the real mechanism, and **prove** the cause before you name it. The deliverable is a
-root cause backed by evidence plus a specific recommended fix. It does **not** apply the fix — the
-user decides and it lands in a separate step.
+**Run guidance.** This is investigation and judgment, not pattern-matching: reproduce the
+failure, trace it to the real mechanism, and **prove** the cause before you name it. In
+Codex/OpenAI, run normal diagnoses at `gpt-5.5 · high`. In Claude Code, run normal diagnoses at
+`claude-opus-4-8 · high`. Default recommendation when both are available: Codex/OpenAI
+`gpt-5.5 · high`. Mention `claude-fable-5 · high` only for larger long-running autonomous work
+where it is available; this skill recommends a fix and stops rather than executing it.
+
+The deliverable is a root cause backed by evidence plus a specific recommended fix. It does
+**not** apply the fix — the user decides and it lands in a separate step.
 
 ## Steps
 
