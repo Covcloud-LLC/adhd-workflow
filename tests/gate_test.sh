@@ -98,16 +98,50 @@ FAILING='exit 1'
 # --- preflight -------------------------------------------------------------
 # A check that is already green before the work is a vacuous check, or the
 # work already exists. Either way the slice cannot proceed.
+# preflight <check-cmd> <check-paths...> — the paths are the check files agent
+# A authored; every one must exist and be non-empty before the command runs.
 
 repo=$(new_repo)
 assert_gate "(a) preflight exits 1 when the check passes" \
     1 "$repo" "check command passed" \
-    preflight "$PASSING"
+    preflight "$PASSING" tests/check.sh
 
 repo=$(new_repo)
-assert_gate "(b) preflight exits 0 when the check fails" \
+assert_gate "(b) preflight exits 0 when the check fails with a genuine assertion failure (1)" \
     0 "$repo" "-" \
-    preflight "$FAILING"
+    preflight "$FAILING" tests/check.sh
+
+# --- preflight: fact one ----------------------------------------------------
+# A red is only evidence when the check could run (see
+# docs/notes/slice-gate-convention.md). A missing or empty check path, or a
+# check exit other than 0/1, is a harness error: exit 2, distinct from both
+# the vacuous green (1) and the genuine red (0).
+
+repo=$(new_repo)
+assert_gate "(h) preflight exits 2 when a named check path does not exist" \
+    2 "$repo" "does not exist" \
+    preflight "$FAILING" tests/no_such_check.sh
+
+repo=$(new_repo)
+assert_gate "(i) preflight exits 2 when any one of several check paths is missing" \
+    2 "$repo" "does not exist" \
+    preflight "$FAILING" tests/check.sh tests/no_such_check.sh
+
+repo=$(new_repo)
+: >"$repo/tests/empty_check.sh"
+assert_gate "(j) preflight exits 2 when a named check path exists but is empty" \
+    2 "$repo" "is empty" \
+    preflight "$FAILING" tests/empty_check.sh
+
+repo=$(new_repo)
+assert_gate "(k) preflight exits 2 when the check command exits 127 (not found)" \
+    2 "$repo" "harness error" \
+    preflight 'exit 127' tests/check.sh
+
+repo=$(new_repo)
+assert_gate "(l) preflight exits 2 when the check command exits 2 (syntax/usage error)" \
+    2 "$repo" "harness error" \
+    preflight 'exit 2' tests/check.sh
 
 # --- postflight ------------------------------------------------------------
 # postflight <check-cmd> <tree-cmd> <check-paths...> <agent-a-sha>
@@ -154,6 +188,30 @@ assert_gate "(e'') postflight exits 1 on a modification to any check path" \
     1 "$repo" "check files modified" \
     postflight "$PASSING" "$PASSING" tests/check.sh tests/check2.sh "$sha_a"
 
+# --- postflight: fact five --------------------------------------------------
+# An ADDED file under a check path is caught, not just a modification. git
+# diff against agent A's sha cannot see an untracked file; the convention
+# (docs/notes/slice-gate-convention.md) tightens the assertion with
+# git status --porcelain. The check path here is a directory — the case where
+# a planted file (a conftest.py, a globbed helper) can neuter a check without
+# editing it.
+
+repo=$(new_repo); sha_a=$(head_sha "$repo")
+printf 'agent B did the work\n' >"$repo/src.txt"
+printf 'a file agent B planted beside the checks\n' >"$repo/tests/planted.sh"
+assert_gate "(m) postflight exits 1 when agent B adds a new file under a check path" \
+    1 "$repo" "added" \
+    postflight "$PASSING" "$PASSING" tests "$sha_a"
+
+# ...but changes outside the check paths are agent B's legitimate work: the
+# status assertion must be scoped to the check paths, not the whole tree.
+repo=$(new_repo); sha_a=$(head_sha "$repo")
+printf 'agent B did the work\n' >"$repo/src.txt"
+printf 'a new source file\n' >"$repo/newfile.txt"
+assert_gate "(m') postflight exits 0 when B's additions are outside the check paths" \
+    0 "$repo" "-" \
+    postflight "$PASSING" "$PASSING" tests "$sha_a"
+
 # --- usage -----------------------------------------------------------------
 
 repo=$(new_repo)
@@ -165,6 +223,11 @@ repo=$(new_repo)
 assert_gate "(g) preflight with no check command exits 1 and says so" \
     1 "$repo" "usage" \
     preflight
+
+repo=$(new_repo)
+assert_gate "(g) preflight with no check paths exits 1 and says so" \
+    1 "$repo" "usage" \
+    preflight "$FAILING"
 
 repo=$(new_repo)
 assert_gate "(g) postflight with too few arguments exits 1 and says so" \
