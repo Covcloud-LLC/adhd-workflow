@@ -25,7 +25,7 @@ A new `/run-plan <plan>` skill drives a plan's open slices to completion with no
 
 ---
 
-### RUN-1 - Give the workflow a fixture namespace
+### RUN-1 - Give the workflow a fixture namespace ✅
 
 > task: Doc/skill-prose slice; red-gate exemption applies because workflow instruction text is the output. In the repo `adhd-workflow`, `docs/plans/` is the only database and is swept by `/standup` (WIP counting, `▶ NEXT` selection) and `/audit-plans` (staleness, malformed-plan checks). There is no place to put a test-fixture plan, so a smoke-test plan would be reported as real work the next morning. Edit `skills/standup/SKILL.md` and `skills/audit-plans/SKILL.md` so that both skip any file in `docs/plans/` whose basename begins with an underscore, exactly as they already skip the `_done/` directory. Say in each skill, in one line, that underscore-prefixed plans are fixtures and are never counted, started, flagged stale, or archived. Do not add any other selection rule and do not change WIP=2. Verify: read back both skill files and confirm each names the underscore rule, ties it to the existing `_done/` convention, and states that fixtures are excluded from WIP counting, `▶ NEXT`, staleness, and archival.
 
