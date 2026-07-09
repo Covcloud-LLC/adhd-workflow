@@ -22,6 +22,12 @@ confirmation. Only persist things actually discussed or demonstrated — never f
   slice's `### <id> — …` heading in `docs/plans/<plan>.md`. This trailing ` ✅` is the
   **canonical slice-done marker** that `/standup` reads to pick the next action — without it,
   standup will re-offer the slice you just finished.
+- **The slice gate** (the convention in the workflow repo's `docs/notes/slice-gate-convention.md`)
+  is the other legitimate writer of this marker: `/run-plan`'s orchestrator stamps a slice
+  ` ✅ (<command>, <sha>)` only after the gate's five machine facts pass. A slice arriving with a
+  provenance-stamped marker is already done — reconcile around it, don't re-confirm it. For
+  hand-run slices the user's confirm above IS the gate; wrap-up has no machine-confirm mode and
+  must never gain one (the convention note says why).
 - Ensure the plan's top-level `Status:` is `in-progress` if it was `todo` (a finished slice
   means the plan is underway). Leave it alone if already `in-progress`.
 - **Plan completion:** count slice headings. If every `### ` slice is now ` ✅` — ignoring
