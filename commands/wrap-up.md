@@ -56,8 +56,11 @@ Scan the current conversation for anything worth persisting:
 - **External references** — URLs, dashboards, tickets, doc locations, channels.
 - **Cross-project insights** — patterns/conventions that apply beyond this repo.
 
-**Routing rule:** project memory = context for future Claude sessions; `docs/notes/` = for
-humans and the repo record. A fact goes to whichever reader needs it — both only when both do.
+**Routing rule:** project memory = context for future execution sessions; `docs/notes/` = for
+humans and the repo record. In Claude Code, project memory means the `.claude/projects/` memory
+files below. In Codex, use whatever project-memory surface is actually available; if there isn't
+one, skip memory writes rather than inventing a path. A fact goes to whichever reader needs it —
+both only when both do.
 
 Then:
 
@@ -87,16 +90,17 @@ here. If no surface qualifies, skip this step silently.
 
 ### 4. Next action — hand off to the driver
 
-The **`/pjm`** session is the single driver of "what's next" (next-action pick, model/effort
-rec, branch setup — it wraps `/standup` for the analysis). **Do NOT run `/standup` here.** A
-wrap-up in an execution session that also names the next action competes with `/pjm` to drive —
-the exact re-decision tax the system fights — and tempts this session into *starting* the next
-slice, breaking the execute-elsewhere separation. End by telling the user: reconcile + capture
-done — switch to your `/pjm` session and ask "what's next?".
+The **`/pjm`** session is the single driver of "what's next" (next-action pick, provider route,
+model/effort rec, branch setup — it wraps `/standup` for the analysis). **Do NOT run `/standup`
+here.** A wrap-up in an execution session that also names the next action competes with `/pjm` to
+drive — the exact re-decision tax the system fights — and tempts this session into *starting* the
+next slice, breaking the execute-elsewhere separation. End by telling the user: reconcile +
+capture done — switch to your `/pjm` session and ask "what's next?".
 
 **Fallback:** if the user says they're not running a `/pjm` session, invoke the **`standup`**
-skill here instead — it owns the `▶ NEXT` line (paste-ready `task:` string + `[model · effort]`),
-the WIP=2 check, and stalled/drift flags. Don't duplicate its logic; just run it.
+skill here instead — it owns the `▶ NEXT` line (paste-ready `task:` string + default route,
+alternate route when present, model, and effort), the WIP=2 check, and stalled/drift flags. Don't
+duplicate its logic; just run it.
 
 ### 5. Weekly-hygiene nudge (conditional — do NOT auto-run)
 
@@ -113,5 +117,6 @@ recommended it.
 - Doc tasks queued (audience · mode · source paths), noting whether any is a completion-blocking
   spec task. If none qualified, omit this line.
 - The next-action hand-off: point the user to their `/pjm` session (or, in the fallback case,
-  the `▶ NEXT` line from standup).
+  the `▶ NEXT` line from standup, including the OpenAI route, Claude route, and chosen default
+  when the plan carries them).
 - The audit-plans nudge, if triggered.

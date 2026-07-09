@@ -14,8 +14,9 @@ ideate  →  reason  →  plan  →  execute  →  validate
                                   /pjm)
 ```
 
-Each stage is one slash command (except *execute*, which happens in separate Claude sessions).
-You run them in the current repo; they read and write that repo's `docs/`.
+Each stage is one slash command (except *execute*, which happens in separate fresh sessions).
+You can run the workflow from Codex or Claude Code; either way, it reads and writes the current
+repo's `docs/`.
 
 ---
 
@@ -33,7 +34,7 @@ Two helper commands sit alongside these:
 - `/standup` — the daily driver. Picks the ONE next thing to work on, enforces the limit of 2
   things in flight at once.
 - `/pjm` — a project-manager session you keep open for a work block. It drives and tracks; it
-  never builds. It hands you task strings to run in fresh sessions.
+  never builds. It hands you task strings to run in fresh Codex or Claude Code sessions.
 - `/design-workshop` — builds a prompt for a separate "critic" session that attacks a hard
   problem before you commit to it. `/reason` calls this when an idea needs it.
 
@@ -75,8 +76,8 @@ you to anything big.
 into `/promote`. This is the fast lane — most ideas live here and barely feel the gate.
 
 **2. Reasoned** — a real decision, but one with a defensible default. There's a trade-off to name,
-maybe two or three ways to go, some risk — but Claude can think it through and recommend one
-without needing a back-and-forth with you.
+maybe two or three ways to go, some risk — but the assistant can think it through and recommend
+one without needing a back-and-forth with you.
 
 > Example: "Cache the product config." Should it be in memory or in Redis? How does it get
 > invalidated? Real questions, but answerable in one pass.
@@ -112,17 +113,19 @@ then the architecture pass on the shape you chose.
 
 ### After a workshop
 
-You run the workshop in a separate Opus session (paste the prompt, think it through). When you've
-got your answer, come back and run `/reason` on the same idea again. It writes up the decision the
-workshop reached as the reasoning note and flips the stamp to `reasoned: notes/...`. Now it's
-ready to plan.
+You run the workshop in a separate high-reasoning session (paste the prompt, think it through):
+Codex/OpenAI `gpt-5.5 · high` or Claude Code `claude-opus-4-8 · high`, with the prompt naming the
+recommended default. When you've got your answer, come back and run `/reason` on the same idea
+again. It writes up the decision the workshop reached as the reasoning note and flips the stamp to
+`reasoned: notes/...`. Now it's ready to plan.
 
 ---
 
 ## Stage 3 — Plan (`/promote`)
 
-`/promote` is the **gatekeeper**. It turns a reasoned idea into a plan that a fresh Claude session
-can run cold — with real file paths, concrete tasks, and a way to verify each one.
+`/promote` is the **gatekeeper**. It turns a reasoned idea into a plan that a fresh Codex or
+Claude Code execution session can run cold — with real file paths, concrete tasks, and a way to
+verify each one.
 
 It now checks **two** gates, and both must pass:
 
@@ -137,8 +140,12 @@ Promote asks *"is the plan itself solid enough to hand off?"* An idea can pass o
 other.
 
 If it passes, `/promote` writes `docs/plans/<slug>.md` as `todo` (it does **not** start the work)
-and sets the `Model` and `Effort` the plan should run at. Refusing is a normal, healthy outcome —
-a weak plan promoted is worse than an idea left alone.
+and sets the route, `Model`, and `Effort` the plan should run at. `Model` is the runtime
+recommendation. `Effort` is the provider-aware reasoning budget. Model-sensitive handoffs should
+carry both routes — for example OpenAI `gpt-5.5 · high` and Claude Code
+`claude-opus-4-8 · high` — plus a `Recommended` line that chooses the default between them for the
+surface you're actually using. Refusing is a normal, healthy outcome — a weak plan promoted is
+worse than an idea left alone.
 
 ### The red-gate: high-effort plans start with a failing test
 
@@ -159,7 +166,8 @@ plan can opt in with a `> Red-gate: yes` header line.
 
 Plans don't get built in your planning session. Each task in a plan is a **self-contained string**
 — it carries its own file paths, requirements, and test expectations, so it runs cold. You paste
-it into a fresh Claude session and let it build.
+it into a fresh Codex or Claude Code session, following the plan's recommended route, and let it
+build.
 
 - `/standup` picks the ONE next thing. It enforces the rule: **no more than 2 plans in flight at
   once.** It's the only place a plan flips to `in-progress`. It also runs an **amnesty sweep**:
@@ -174,7 +182,8 @@ it into a fresh Claude session and let it build.
   command to run.
 - `/pjm` is a project-manager session you keep open for the day. It re-checks the state every
   turn (you move things between turns), runs the standup pick, puts the task string on your
-  clipboard, and tells you which model/effort to run it at. It manages; it doesn't build.
+  clipboard, and tells you which provider route, model, and effort to run it at. It manages; it
+  doesn't build.
 
 ### Worktrees: keeping parallel sessions out of each other's way
 

@@ -37,16 +37,21 @@ Output shape for trace mode:
 5. **Amnesty sweep (untracked work):** scan recent git activity — branches and commits from the last **~14 days** (`git log --since="14 days ago" --format="%h %cr %s"` plus `git for-each-ref --sort=-committerdate refs/heads/`) — for work that matches **no plan** in `docs/plans/` and **no defect** in `docs/defects/`. Report matches under a `⊘ UNTRACKED` section and **offer** to backfill: a plan stub via the normal format, or a defect file if it's bug-shaped — stamped as retroactive capture (e.g. `> Backfilled retroactively by /standup amnesty sweep, <date>`). Rules: **never scold** (this is amnesty, not enforcement), **never auto-write** (offer only, write on confirmation), and always allow a batch **"dismiss all"** so chore/noise commits don't nag every standup. Keep the section compact — group related commits into one line per apparent piece of work.
 6. **Defect sweep:** read `docs/defects/*.md` (skip if the dir doesn't exist). Note each defect's status/severity. Two classes **compete for the `▶ NEXT` pick**: open **blocker/high-severity** defects, and **`diagnosed`** defects with a ready recommended fix. Summarize the rest on a `✚ DEFECTS` line (counts by status).
 7. **Completion check:** any plan whose slices are all ` ✅` (or delegated/dropped) → recommend `git mv` to `docs/plans/_done/` and offer to do it.
-8. **Pick the ONE next action** (priority order). Echo the owning plan's `Model` + `Effort` on the `▶ NEXT` line so a fresh session can run it at the right setting without reopening the plan; if the plan is missing those fields, say so and suggest `/audit-plans`.
+8. **Pick the ONE next action** (priority order). Echo the owning plan's `Model` + `Effort` on
+   the `▶ NEXT` line so a fresh session can run it at the right setting without reopening the
+   plan. If the plan carries provider-specific routes, report both routes and the chosen default
+   (e.g. Codex/OpenAI `gpt-5.5 · high`; Claude Code `claude-opus-4-8 · high`;
+   default Codex/OpenAI).
+   If the plan is missing model/effort fields, say so and suggest `/audit-plans`.
    a. A **diagnosed blocker/high defect** beats starting a new plan slice — a ready fix is the nearest finish line there is. Quote the defect's recommended fix as the task. Apply the same nearest-finish-line logic between defects and in-progress slices: whichever is closest to done wins.
-   b. An `in-progress` plan — the **nearest finish line** always wins over starting something new. Pick its **first slice not marked ` ✅`** and quote that slice's `task:` string verbatim so it's paste-ready for a fresh Claude session.
+   b. An `in-progress` plan — the **nearest finish line** always wins over starting something new. Pick its **first slice not marked ` ✅`** and quote that slice's `task:` string verbatim so it's paste-ready for a fresh Codex or Claude Code session, depending on the selected route.
    c. If nothing is `in-progress` and WIP < 2: offer to **start** the top `todo` plan's first task — flip that plan to `in-progress` (this is the start-time WIP gate) and quote the task.
    d. If at WIP cap (2 in-progress) and the user wants to start a `todo`: **refuse.** Name the two in-progress plans and tell them to finish or explicitly drop one first.
 
 ## Output shape (tight — lead with the action)
 
 ```
-▶ NEXT: <ID>-<n> in <plan> — <title>  [model: <model> · effort: <effort>]
+▶ NEXT: <ID>-<n> in <plan> — <title>  [default: <route> <model> · <effort>; also: <other route> <model> · <effort>]
   task: <verbatim task string>
 
 WIP: <N>/2 in progress
@@ -60,12 +65,12 @@ WIP: <N>/2 in progress
   → backfill plan stub / defect file / dismiss all?
 
 BOARD (all active plans)
-plan                 status       slices  next open slice           last touch   model · effort
-<slug>               in-progress  2/5     03 — <slice title>        2 days ago   sonnet · high
-<slug>               todo         0/3     01 — <slice title>        3 weeks ago  fable · max
+plan                 status       slices  next open slice           last touch   route · model · effort
+<slug>               in-progress  2/5     03 — <slice title>        2 days ago   Codex/OpenAI* gpt-5.5 · high / Claude Code claude-opus-4-8 · high
+<slug>               todo         0/3     01 — <slice title>        3 weeks ago  Codex/OpenAI gpt-5.4-mini · medium / Claude Code* claude-fable-5 · high
 ```
 
-The `BOARD` table lists **every** plan in `docs/plans/*.md` except `_done/` — including `todo` and `blocked` plans the sections above don't show. Columns: plan slug; status (`todo`/`in-progress`/`blocked`); slices done/total (count ` ✅` slice headings vs total slice headings); next open slice id + title (first slice heading without ` ✅`); last-touched (`git log -1 --format=%cr -- <plan-file>`); the plan's `Model · Effort`. Build it from the step-1 parse — do **not** re-read the plans. Keep it a compact monospace table that fits a terminal; truncate long titles. Omit the table entirely when there are zero active plans. **On a plain `/standup`, the board is ephemeral — rendered to the terminal only, never written to disk.** Persisting it is opt-in via `--board` below.
+The `BOARD` table lists **every** plan in `docs/plans/*.md` except `_done/` — including `todo` and `blocked` plans the sections above don't show. Columns: plan slug; status (`todo`/`in-progress`/`blocked`); slices done/total (count ` ✅` slice headings vs total slice headings); next open slice id + title (first slice heading without ` ✅`); last-touched (`git log -1 --format=%cr -- <plan-file>`); the plan's route/model/effort summary. Mark the chosen default with `*` when both provider routes are present. Build it from the step-1 parse — do **not** re-read the plans. Keep it a compact monospace table that fits a terminal; truncate long titles. Omit the table entirely when there are zero active plans. **On a plain `/standup`, the board is ephemeral — rendered to the terminal only, never written to disk.** Persisting it is opt-in via `--board` below.
 
 ## `--board`: persist the board to `docs/BOARD.md`
 
