@@ -1,6 +1,6 @@
 # Plan orchestrator — serial `/run-plan` with a scripted verification gate
 
-> Status: **in-progress** · created 2026-07-09 · started 2026-07-09
+> Status: **done** · created 2026-07-09 · started 2026-07-09 · finished 2026-07-09
 > Model: Claude claude-opus-4-8 · Effort: high
 > OpenAI: gpt-5.5 · Effort: high
 > Claude: claude-opus-4-8 · Effort: high
