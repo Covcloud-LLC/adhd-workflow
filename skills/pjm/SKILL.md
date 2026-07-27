@@ -108,7 +108,7 @@ The orchestration loop is:
 2. Pick the next allowed action using `/standup` rules, narrowed to the named plan unless global
    WIP or an unmerged in-flight branch forces a nearer finish line. Within the named plan, find
    the **first `### <id> — …` slice heading not marked ` ✅`** (any marker variant counts as done:
-   bare ` ✅`, or provenance-stamped ` ✅ (<command>, <sha>)`) and use that slice's verbatim
+   bare ` ✅`, provenance-stamped ` ✅ (<command>, <sha>)`, or ` ✅ (<command>, single-agent)`) and use that slice's verbatim
    `task:` string as the execution handoff. Slices exist only as `### ` headings — a legacy
    bold-dialect plan (`**<ID>-n — …** · status` paragraph lines) has no findable slices; route it
    to `/audit-plans` for migration instead of guessing.

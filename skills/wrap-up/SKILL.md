@@ -42,7 +42,9 @@ Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD
   standup will re-offer the slice you just finished.
 - **The slice gate** (the convention in the workflow repo's `docs/notes/slice-gate-convention.md`)
   is the other legitimate writer of this marker: `/run-plan`'s orchestrator stamps a slice
-  ` ✅ (<command>, <sha>)` only after the gate's five machine facts pass. A slice arriving with a
+  ` ✅ (<command>, <sha>)` only after the gate's five machine facts pass, or
+  ` ✅ (<command>, single-agent)` for a red-gate-exempt slice witnessed by the whole-tree check
+  alone (the weaker of the two — the provenance says which). A slice arriving with a
   provenance-stamped marker is already done — reconcile around it, don't re-confirm it. For
   hand-run slices the user's confirm above IS the gate; wrap-up has no machine-confirm mode and
   must never gain one (the convention note says why).

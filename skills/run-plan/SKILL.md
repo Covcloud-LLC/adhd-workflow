@@ -1,6 +1,6 @@
 ---
 name: run-plan
-description: Serial plan orchestrator — drives a plan's open slices to completion with no human between slices. Two subagents per slice (one authors the check, one implements); the orchestrator alone runs the scripted verification gate (scripts/slice-gate.sh) and obeys its exit code without interpretation. Use when the user types /run-plan <plan>, or says "run this plan", "execute the plan", "drive this plan to done". Halts on any red, never retries, resumes from git log. Part of the ADHD project-workflow system (see [[pjm]], [[wrap-up]], [[standup]], [[promote]]).
+description: Serial plan orchestrator — drives a plan's open slices to completion with no human between slices. Two subagents per slice (one authors the check, one implements); slices whose task string names a red-gate exemption run single-agent, gated on the whole-tree check. The orchestrator alone runs the scripted verification gate (scripts/slice-gate.sh) and obeys its exit code without interpretation. Use when the user types /run-plan <plan>, or says "run this plan", "execute the plan", "drive this plan to done". Halts on any red or on a pre-build question from a subagent, never retries, resumes from git log, and invokes [[wrap-up]] when the run ends. Part of the ADHD project-workflow system (see [[pjm]], [[wrap-up]], [[standup]], [[promote]]).
 ---
 
 # Run a plan — serial, gated, unwitnessed by no one
@@ -56,7 +56,13 @@ any failure **name the offending slice (or header) and refuse to start**:
 
 ## 1 · The per-slice loop — strictly serial, in plan order
 
-For each open slice, top to bottom:
+For each open slice, top to bottom, first pick its lane. **A slice whose task string names its
+exemption runs the single-agent lane** (section 1b) — `/promote` requires an exempt slice to say
+so in the task text ("Exempt from the Check/Build split…", "Exemption: example/fixture-authoring
+slice", "Doc slice (red-gate exempt)…"), so the task string is the detector; you do not judge
+whether a slice *deserves* the exemption, only whether it declares one. Everything else runs the
+two-agent loop below. A non-exempt slice with no Check/Build split never runs — that was refused
+at step 0.
 
 1. **Spawn agent A** with the slice's **Check: text only** — plus: "Author the check described.
    Implement nothing else. Do not run the plan's other commands, do not read the plan file, do
@@ -92,6 +98,32 @@ For each open slice, top to bottom:
 
 Two commits per slice, both tagged with the slice id. **Commit, never push** — a local commit is
 reversible; a push is not. The user pushes.
+
+## 1b · The single-agent lane — exempt slices
+
+Doc, example/fixture, and spike slices are exempt from the Check/Build split by `/promote`'s own
+red-gate rule — there is no separate check to author, because the artifact is its own check or
+there is nothing to red-test. Refusing them would refuse plans `/promote` told the user to
+write. They run, with a weaker gate:
+
+1. **Spawn one agent** with the slice's **whole task string** — plus: "Do not read the plan
+   file, do not commit. Write your notes to `<scratch>/<slice-id>.md`." No A/B pair. The agent
+   returns; you read **nothing** it says.
+2. **No preflight, no check-files-untouched assertion.** There is no independent check to go
+   red and no agent-A files to protect — skip both, deliberately, not silently.
+3. **Postflight**: run the plan's whole-tree **`> Check:`** command directly (un-piped, `$?`
+   immediately). Exit 0 → proceed. Anything else → **Halt.**
+4. **Stamp and land**: append ` ✅ (<Check-header-command>, single-agent)` to the slice's
+   `### <id>` heading and commit the work and the stamped plan file together as
+   `<slice-id>: <slice title>`. One commit, not two.
+
+**This gate is weaker, and the stamp says so.** The two-agent stamp names a check authored by a
+party with no stake in the implementation; `single-agent` in the provenance tells a reader three
+weeks later that no independent check existed. It is still honest work, not a rubber stamp: an
+exempt slice's output lands in territory the whole-tree command already covers — everything
+under `examples/` is validated by the repo's own check command — so the work has a witness, just
+not an independent one. What the weaker gate cannot catch is an agent that does *less* than the
+task asked; the whole-tree green only proves it broke nothing.
 
 ## 2 · Invariants — the design is these, not the loop
 
