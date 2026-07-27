@@ -14,9 +14,8 @@ There is **no application code, no build, and no test suite.** Every artifact is
 "product" is the prose inside `skills/*/SKILL.md`.
 
 ```
-skills/<name>/SKILL.md   the 12 skills — this is the product
-commands/wrap-up.md      legacy command copy for surfaces that still load command prompts
-install.sh               symlinks skills into ~/.codex, plus legacy command copies
+skills/<name>/SKILL.md   the 13 skills — this is the product
+install.sh               symlinks skills into ~/.codex
 docs/                    this repo's own ideas/notes/plans (see "Dogfooding")
 ```
 

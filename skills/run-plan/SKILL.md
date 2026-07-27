@@ -19,6 +19,19 @@ the script lives at `<workflow-repo>/scripts/slice-gate.sh`). The five facts, in
 red on the slice's check → agent B implements → postflight green on the same check → whole-tree
 green → agent A's check files untouched. Only then does ` ✅` get written.
 
+## Docs root (resolve this FIRST)
+
+Before reading or writing any lifecycle doc, resolve the **docs root**:
+
+- Let `<repo>` = basename of the current repo's git root (`basename "$(git rev-parse --show-toplevel)"`).
+- If `<backlog-root>/<repo>/` exists, **that dir is the docs root** — `ideas/`, `plans/` (with `_done/`), `defects/`, and `BOARD.md` live directly under it (there is **no `docs/` path segment** inside the metarepo).
+- Otherwise fall back to `./docs/` in the current repo, exactly as before.
+
+Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD.md` mean paths under the resolved docs root. **Reasoning notes are the exception: `docs/notes/` ALWAYS stays in the current code repo's own `./docs/notes/`, never the metarepo.** Paths written *inside* a plan/idea/defect are relative to the code repo, not the metarepo.
+
+**Writing under the metarepo:** when the docs root is the metarepo, every file you create, edit, move (`git mv`), or delete there is **immediately committed and pushed**, scoped to the affected path(s): `git -C <backlog-root> add <path> && git -C <backlog-root> commit -m "<msg>" && git -C <backlog-root> push`. This is a deliberate exception to the no-auto-commit rule and applies ONLY to writes under the metarepo. Reads and writes in the code repo (reasoning notes, `scripts/slice-gate.sh`, git-based stall detection) are unchanged and are **NOT** auto-committed.
+
+
 ## 0 · Validate before slice 1 — refuse loudly, not at slice 4
 
 Read the plan from the current repo's `docs/plans/<plan>.md`. Then check ALL of these, and on
@@ -87,8 +100,10 @@ reversible; a push is not. The user pushes.
   you matched at start has changed or moved, **abort the run** and tell the user what completed.
   Do not reconcile a concurrent hand-edit — "the file moved under me, here's what finished, you
   drive" is always correct.
-- **Model tier**: spawn A and B at the plan's `Model` / `Effort` header (per-slice `Run at:`
-  overrides it when present).
+- **Model tier**: spawn A and B at the slice's `Run at:` tier, falling back to the plan's
+  `Default run tier:` header when the slice carries no `Run at:` line. The slice line always wins —
+  over the plan default and over the plan's at-a-glance table. Legacy plans may carry the older
+  `Model:` / `Effort:` header instead; read it the same way and do not refuse over it.
 
 ## 3 · Failure = halt
 

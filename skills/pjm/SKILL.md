@@ -17,6 +17,19 @@ long-running `/pjm` session open for a day (or block) of work. Its job is to **m
 delegate, not to build.** `/standup` is the analysis engine; this skill is the stance around it
 plus the delegation mechanics.
 
+## Docs root (resolve this FIRST)
+
+Before reading or writing any lifecycle doc, resolve the **docs root**:
+
+- Let `<repo>` = basename of the current repo's git root (`basename "$(git rev-parse --show-toplevel)"`).
+- If `<backlog-root>/<repo>/` exists, **that dir is the docs root** — `ideas/`, `plans/` (with `_done/`), `defects/`, and `BOARD.md` live directly under it (there is **no `docs/` path segment** inside the metarepo).
+- Otherwise fall back to `./docs/` in the current repo, exactly as before.
+
+Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD.md` mean paths under the resolved docs root. **Reasoning notes are the exception: `docs/notes/` ALWAYS stays in the current code repo's own `./docs/notes/`, never the metarepo.** Paths written *inside* a plan/idea/defect are relative to the code repo, not the metarepo.
+
+**Writing under the metarepo:** when the docs root is the metarepo, every file you create, edit, move (`git mv`), or delete there is **immediately committed and pushed**, scoped to the affected path(s): `git -C <backlog-root> add <path> && git -C <backlog-root> commit -m "<msg>" && git -C <backlog-root> push`. This is a deliberate exception to the no-auto-commit rule and applies ONLY to writes under the metarepo. Reads and writes in the code repo (reasoning notes, `scripts/slice-gate.sh`, git-based stall detection) are unchanged and are **NOT** auto-committed.
+
+
 ## The cardinal stance
 
 **You are the project manager. You do not execute slices in this session.** Analysis, tracking,
@@ -51,7 +64,9 @@ memory). Never trust the state from earlier in the conversation. At the start of
    inline. The user runs it in a fresh Codex or Claude Code session — the clipboard is the handoff
    (long CLI blocks copy unreliably; this is the global pbcopy rule).
 4. **Echo provider route, model, effort, and chosen default with a judgment call.** Start from the
-   plan's `Model`/`Effort` header and any provider-route guidance in the plan. If the plan carries
+   slice's `Run at:` tier, falling back to the plan's `Default run tier:` header when the slice has
+   none (legacy plans may carry the older `Model`/`Effort` header — read it the same way). The slice
+   line wins over both the plan default and the plan's at-a-glance table. If the plan carries
    both routes, report both and say which route is the default for this slice. Then advise:
    - **Downshift** a slice that is fully specified with little design latitude — a single method
      with an enumerated test matrix, a mechanical rename, a spec'd schema field. (e.g. 7.2
@@ -61,7 +76,8 @@ memory). Never trust the state from earlier in the conversation. At the start of
      orchestration, cross-cutting integration, anything with open shape.
    - State the route rec, model/effort rec, chosen default, and the one-line reason; it's the
      user's call. Persist a per-slice override as a
-     `**Run at: <provider route>: <model> · <effort> (default)**` note under the slice heading
+     `> Run at: Claude Code **<friendly> · <effort>** · Codex **<friendly> · <effort>**` line
+     directly under the slice heading, with a `> Why this tier:` line naming the reason,
      when the user accepts one, or as paired `Codex:` / `Claude Code:` entries when both routes
      should remain available, so a future standup echoes the right setting.
 5. **Offer to set up the branch** for the chosen slice (see below). Don't cut it silently — offer,
@@ -122,8 +138,9 @@ Stop and ask at every checkpoint that needs judgment:
   whether to diagnose.
 - **Dirty worktree:** surface the files and ask before status edits, branch moves, commits, pushes,
   or archive actions.
-- **Missing route/model header:** stop until the plan has `Model`/`Effort` and provider route lines
-  (`OpenAI`, `Claude`, `Recommended`) or the user explicitly asks for a plan-edit handoff.
+- **Missing route/model header:** stop until the plan has a `Default run tier:` line and per-slice
+  `Run at:` lines — or a legacy `Model`/`Effort` header with `OpenAI`/`Claude`/`Recommended` route
+  lines, which is readable, not a blocker — unless the user explicitly asks for a plan-edit handoff.
 - **Blocked slice:** do not skip around it unless `/standup` rules identify a nearer legitimate
   finish line; capture the blocker and ask what route to take.
 - **Branch/merge ambiguity:** stop when the current branch, target slice branch, PR/merge state, or

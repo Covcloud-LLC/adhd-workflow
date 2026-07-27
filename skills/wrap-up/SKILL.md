@@ -17,6 +17,19 @@ in the current model — the long-running `/pjm` session owns it (see step 4).
 **Cardinal rule: never flip a status silently.** Recommend the change, then act on the user's
 confirmation. Only persist things actually discussed or demonstrated — never fabricate.
 
+## Docs root (resolve this FIRST)
+
+Before reading or writing any lifecycle doc, resolve the **docs root**:
+
+- Let `<repo>` = basename of the current repo's git root (`basename "$(git rev-parse --show-toplevel)"`).
+- If `<backlog-root>/<repo>/` exists, **that dir is the docs root** — `ideas/`, `plans/` (with `_done/`), `defects/`, and `BOARD.md` live directly under it (there is **no `docs/` path segment** inside the metarepo).
+- Otherwise fall back to `./docs/` in the current repo, exactly as before.
+
+Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD.md` mean paths under the resolved docs root. **Reasoning notes are the exception: `docs/notes/` ALWAYS stays in the current code repo's own `./docs/notes/`, never the metarepo.** Paths written *inside* a plan/idea/defect are relative to the code repo, not the metarepo.
+
+**Writing under the metarepo:** when the docs root is the metarepo, every file you create, edit, move (`git mv`), or delete there is **immediately committed and pushed**, scoped to the affected path(s): `git -C <backlog-root> add <path> && git -C <backlog-root> commit -m "<msg>" && git -C <backlog-root> push`. This is a deliberate exception to the no-auto-commit rule and applies ONLY to writes under the metarepo. Reads and writes in the code repo (reasoning notes, `scripts/slice-gate.sh`, git-based stall detection) are unchanged and are **NOT** auto-committed.
+
+
 ## Sequence
 
 ### 1. Reconcile plan status (slice-level)
@@ -47,8 +60,8 @@ confirmation. Only persist things actually discussed or demonstrated — never f
   step gated on the user's confirmation, per the cardinal rule:
   1. Ensure the work is **committed on the slice branch** (offer the commit; never commit
      silently — global git rule applies).
-  2. Hand back to the **main checkout** for merge/PR — **never merge silently**; offer the
-     merge or PR step and let the user drive it.
+  2. Hand back to the **main checkout** for merge/PR/push — **never merge or push silently**;
+     offer the merge, PR, or push step and let the user drive it.
   3. Once the branch is merged or pushed, offer `git worktree remove <path>` (+ pruning the
      branch if merged).
   If the worktree still has **uncommitted changes**, flag it plainly and stop there — **never
@@ -105,8 +118,15 @@ The **`/pjm`** session is the single driver of "what's next" (next-action pick, 
 model/effort rec, branch setup — it wraps `/standup` for the analysis). **Do NOT run `/standup`
 here.** A wrap-up in an execution session that also names the next action competes with `/pjm` to
 drive — the exact re-decision tax the system fights — and tempts this session into *starting* the
-next slice, breaking the execute-elsewhere separation. End by telling the user: reconcile +
-capture done — switch to your `/pjm` session and ask "what's next?".
+next slice, breaking the execute-elsewhere separation.
+
+If this slice came from **`/pjm run-plan <plan>`**, end by telling the user: reconcile + capture
+done — return to that same `/pjm` session and continue the same plan-run loop for `<plan>`. Do
+not start a fresh PJM session, do not let wrap-up pick the next slice, and do not ask the user to
+run a plain "what's next?" standup-style decision.
+
+Otherwise, end by telling the user: reconcile + capture done — switch to your `/pjm` session and
+ask "what's next?".
 
 **Fallback:** if the user says they're not running a `/pjm` session, invoke the **`standup`**
 skill here instead — it owns the `▶ NEXT` line (paste-ready `task:` string + default route,
@@ -127,7 +147,8 @@ recommended it.
   persisting, say so — that's fine.
 - Doc tasks queued (audience · mode · source paths), noting whether any is a completion-blocking
   spec task. If none qualified, omit this line.
-- The next-action hand-off: point the user to their `/pjm` session (or, in the fallback case,
-  the `▶ NEXT` line from standup, including the OpenAI route, Claude route, and chosen default
-  when the plan carries them).
+- The next-action hand-off: point the user to their `/pjm` session; if the slice came from
+  `/pjm run-plan <plan>`, explicitly tell them to return to that same session and continue the
+  same plan-run loop for `<plan>` (or, in the fallback case, the `▶ NEXT` line from standup,
+  including the OpenAI route, Claude route, and chosen default when the plan carries them).
 - The audit-plans nudge, if triggered.

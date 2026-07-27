@@ -9,6 +9,19 @@ You are a **gatekeeper**, not a yes-man. The user has ADHD and starts more than 
 
 This gate enforces **quality**. It does NOT enforce the WIP limit — promoting to a `todo` backlog is healthy capture-and-defer. The WIP=2 cap on *starting* work is enforced by `/standup`.
 
+## Docs root (resolve this FIRST)
+
+Before reading or writing any lifecycle doc, resolve the **docs root**:
+
+- Let `<repo>` = basename of the current repo's git root (`basename "$(git rev-parse --show-toplevel)"`).
+- If `<backlog-root>/<repo>/` exists, **that dir is the docs root** — `ideas/`, `plans/` (with `_done/`), `defects/`, and `BOARD.md` live directly under it (there is **no `docs/` path segment** inside the metarepo).
+- Otherwise fall back to `./docs/` in the current repo, exactly as before.
+
+Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD.md` mean paths under the resolved docs root. **Reasoning notes are the exception: `docs/notes/` ALWAYS stays in the current code repo's own `./docs/notes/`, never the metarepo.** Paths written *inside* a plan/idea/defect are relative to the code repo, not the metarepo.
+
+**Writing under the metarepo:** when the docs root is the metarepo, every file you create, edit, move (`git mv`), or delete there is **immediately committed and pushed**, scoped to the affected path(s): `git -C <backlog-root> add <path> && git -C <backlog-root> commit -m "<msg>" && git -C <backlog-root> push`. This is a deliberate exception to the no-auto-commit rule and applies ONLY to writes under the metarepo. Reads and writes in the code repo (reasoning notes, `scripts/slice-gate.sh`, git-based stall detection) are unchanged and are **NOT** auto-committed.
+
+
 ## The reasoning precondition (check FIRST, before the rubric)
 
 An idea must clear the `/reason` gate before it can become a plan. Read the idea's frontmatter
@@ -53,13 +66,20 @@ must pass.
 # <Title> — <one-line outcome>
 
 > Status: **todo** · created <YYYY-MM-DD>
-> Model: <OpenAI gpt-5.5|OpenAI gpt-5.4|OpenAI gpt-5.4-mini|OpenAI gpt-5.4-nano|Claude claude-fable-5|Claude claude-opus-4-8|Claude claude-sonnet-5|Claude claude-haiku-4-5> · Effort: <provider-valid effort>
-> OpenAI: <gpt-5.5|gpt-5.4|gpt-5.4-mini|gpt-5.4-nano> · Effort: <none|low|medium|high|xhigh>
-> Claude: <claude-fable-5|claude-opus-4-8|claude-sonnet-5|claude-haiku-4-5> · Effort: <low|medium|high|xhigh|max>
-> Recommended: <OpenAI|Claude> <model-id> · <effort> for <current surface>; use <other provider> <model-id> · <effort> when running there
+> Default run tier: **<Claude friendly-name> · <effort>** (`<claude-slug>`) · Codex **<OpenAI friendly-name> · <effort>** (`<openai-slug>`) — **each slice overrides this**; read the `Run at:` line on the slice you are starting.
 > Red-gate: yes   <!-- optional: opt a medium plan into the red-gate rule; omit otherwise -->
 > Check: <whole-tree check command, e.g. pnpm test>   <!-- the repo's whole-tree check; required for /run-plan to drive the plan -->
 > Why: <one line>
+
+## Run tiers at a glance
+
+| Slice | What it is | Claude Code | Codex |
+| --- | --- | --- | --- |
+| **<ID>-1** | <five-word gist> | **<friendly> · <effort>** | <friendly> · <effort> |
+| **<ID>-2** | <five-word gist> | **<friendly> · <effort>** | <friendly> · <effort> |
+
+Exact model IDs: `<the slugs used above>`. If a slice's `Run at:` line and this table ever
+disagree, **the slice line wins.**
 
 ## Definition of done
 <the observable end state>
@@ -71,9 +91,13 @@ must pass.
 ---
 
 **<ID>-1 — <task title>** · todo · depends: none
+> Run at: Claude Code **<friendly-name> · <effort>** · Codex **<friendly-name> · <effort>**
+> Why this tier: <one line naming the specific latitude or trap that sets the tier>
 > task: Check: <the concrete test file/case agent A authors, with its key assertions — and nothing else>. Build: <the implementation work, self-contained: paths, contract, behavior>. Verify: <runnable command naming the check, e.g. pnpm test -t "<ID>-1">.
 
 **<ID>-2 — <task title>** · todo · depends: <ID>-1   <!-- plain shape: exempt or non-red-gated slices -->
+> Run at: Claude Code **<friendly-name> · <effort>** · Codex **<friendly-name> · <effort>**
+> Why this tier: <one line>
 > task: <self-contained prompt: paths, contract, behavior, tests>. Verify: <command/test/observable proof>.
 ```
 
@@ -83,13 +107,51 @@ that a slice broke nothing. It is optional for plans that will only ever be hand
 
 Use a short uppercase ID prefix derived from the slug. Statuses used across the system: `todo` · `in-progress` · `blocked` · `done`. Match whatever the repo's existing plans already use if they differ.
 
-The `Model` line is the recommended default route for the current surface, and it must be provider-qualified. The `OpenAI` and `Claude` lines preserve the alternate provider route so a future session can run the same plan from Codex or Claude Code without re-deciding the model.
+### Run tiers: per slice, not per plan
 
-**Legacy migration rule:** old active plans may still use unqualified `opus`, `sonnet`, `haiku`, or `fable` in the `Model` line. Do not copy that shape into new plans. Flag those old plans for migration to a provider-qualified route such as `Claude claude-opus-4-8` plus explicit OpenAI / Claude route lines; do not treat them as unreadable.
+Both provider routes are still recorded and a default is still named — that contract is settled
+(`docs/notes/openai-model-routing-for-workflow-skills-reasoning.md`) and this format keeps it. What
+changed is **granularity and rendering**: one `Default run tier:` line instead of four near-duplicate
+`Model:` / `OpenAI:` / `Claude:` / `Recommended:` lines, and a real per-slice call on each slice.
+
+- **Friendly names on the slice lines** (`Opus 4.8 · high`), because that line is read at handoff
+  time by a human deciding what to launch. **Exact slugs once**, in the `Default run tier:` line and
+  under the at-a-glance table, because that is the machine-checkable part. Valid slugs are unchanged:
+  OpenAI `gpt-5.5|gpt-5.4|gpt-5.4-mini|gpt-5.4-nano` with effort `none|low|medium|high|xhigh`; Claude
+  `claude-fable-5|claude-opus-4-8|claude-sonnet-5|claude-haiku-4-5` with effort
+  `low|medium|high|xhigh|max` (`max` is Claude-only and session-only).
+- **Use this ladder** unless the plan argues otherwise: **Opus 4.8 · high ↔ GPT-5.5 · high** for
+  design latitude; **Sonnet 5 · high ↔ GPT-5.5 · medium** for authoring against settled semantics
+  that still has a trap in it; **Sonnet 5 · medium ↔ GPT-5.4-mini · medium** for mechanical work.
+  Reserve `claude-fable-5 · high` for large long-running autonomous slices.
+- **Make real calls, not a uniform copy.** A plan whose every slice carries the same tier has not
+  been thought about. The usual split: schema/contract/orchestration slices keep the top tier
+  because their shape decisions propagate; example, fixture, and doc slices downshift. Say which in
+  one line.
+- **Model and effort move independently.** Downshifting the model does not mean downshifting effort.
+  A slice whose task string enumerates every case but where a careless pass ships a plausible wrong
+  answer — arithmetic in a worked example, a mutation check that is easy to fake — is a
+  **`Sonnet 5 · high`** slice. Ask two questions: *how much is left to decide* (sets the model) and
+  *how expensive is a quiet mistake* (sets the effort).
+- **`Why this tier:` is required** and must name the specific latitude or trap, not restate the
+  slice title. "Sets the entity shape five later slices inherit" is a reason; "important slice" is
+  not.
+
+**Legacy migration rule:** old active plans may carry the previous four-line
+`Model:`/`OpenAI:`/`Claude:`/`Recommended:` header, or unqualified `opus`, `sonnet`, `haiku`, `fable`
+model names. Both are **readable legacy**, never malformed. Do not copy either shape into new plans.
+Flag them for migration to a `Default run tier:` line plus per-slice `Run at:` lines, and offer to
+convert. A plan with no model header at all still degrades gracefully — see the red-gate rule below.
 
 ## Red-gate authoring rule (provider-aware Effort `high`+)
 
-When the plan's provider-aware `Effort` is `high`, `xhigh`, or Claude-only `max`, each
+The trigger reads the **slice's own** `Run at:` effort, falling back to the plan's
+`Default run tier:` effort when a slice carries no `Run at:` line. This is why effort is worth
+setting per slice: a `medium` authoring slice in an otherwise `high` plan is not forced into a
+Check/Build split it has nothing to gain from, and a `high`-effort slice in an otherwise `medium`
+plan gets the discipline it needs.
+
+When that effort is `high`, `xhigh`, or Claude-only `max`, each
 **correctness-sensitive** task's `task:` string splits into two **explicitly labelled parts**,
 so the check and the implementation can be authored by different sessions and the red can be
 witnessed by a party with no stake in it (the slice-gate convention —
@@ -111,7 +173,7 @@ the same discipline through the split: author the Check first, run it, state **"
 red"**, then do the Build.
 
 A `medium` plan may opt in by carrying a `> Red-gate: yes` header line (add it below the
-`> Model:` line); that applies this rule below `high`.
+`> Default run tier:` line); that applies this rule below `high`, to every slice.
 
 **Exemptions** (apply even in `high`+ plans): spike/exploratory, doc, and design slices are
 exempt — where the spec is the output, there is nothing to red-test; the task string should say

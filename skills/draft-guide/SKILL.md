@@ -12,6 +12,9 @@ right, get the structure right, hold the reading level; leave the final voice to
 
 `$ARGUMENTS` = the topic, a backlog ID (e.g. `AUTH-3`), or a target file path. If it's a backlog ID,
 read its `task:` and `Verify:` lines from `docs/plans/` first — they define the scope and the gate.
+Resolve `docs/plans/` via the same docs-root rule the lifecycle skills use: if
+`<backlog-root>/<repo>/` exists (where `<repo>` = basename of the git root), the plan
+lives at `<backlog-root>/<repo>/plans/`; otherwise it's the repo's own `./docs/plans/`.
 
 ## What this does / does not do
 

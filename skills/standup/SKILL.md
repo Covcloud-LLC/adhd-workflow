@@ -7,6 +7,19 @@ description: The daily ADHD driver. Reviews plans in the current repo, enforces 
 
 The user has ADHD: too many open loops, novelty bias, weak task object-permanence. This ritual fights all three. It runs against the **current repo** (the user runs it per-repo). The cardinal rule: **end by naming ONE next action, not a menu.** A list is a re-decision tax the user pays by doing nothing.
 
+## Docs root (resolve this FIRST)
+
+Before reading or writing any lifecycle doc, resolve the **docs root**:
+
+- Let `<repo>` = basename of the current repo's git root (`basename "$(git rev-parse --show-toplevel)"`).
+- If `<backlog-root>/<repo>/` exists, **that dir is the docs root** — `ideas/`, `plans/` (with `_done/`), `defects/`, and `BOARD.md` live directly under it (there is **no `docs/` path segment** inside the metarepo).
+- Otherwise fall back to `./docs/` in the current repo, exactly as before.
+
+Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD.md` mean paths under the resolved docs root. **Reasoning notes are the exception: `docs/notes/` ALWAYS stays in the current code repo's own `./docs/notes/`, never the metarepo.** Paths written *inside* a plan/idea/defect are relative to the code repo, not the metarepo.
+
+**Writing under the metarepo:** when the docs root is the metarepo, every file you create, edit, move (`git mv`), or delete there is **immediately committed and pushed**, scoped to the affected path(s): `git -C <backlog-root> add <path> && git -C <backlog-root> commit -m "<msg>" && git -C <backlog-root> push`. This is a deliberate exception to the no-auto-commit rule and applies ONLY to writes under the metarepo. Reads and writes in the code repo (reasoning notes, `scripts/slice-gate.sh`, git-based stall detection) are unchanged and are **NOT** auto-committed.
+
+
 ## Feature trace mode: `/standup <feature-or-plan>`
 
 If the user passes an argument (`/standup <term>`) — other than the `--board` flag below — **skip the board review entirely** and answer "where is this item in the lifecycle and what's its next command?":
@@ -44,11 +57,15 @@ Output shape for trace mode:
 8. **Pick the ONE next action globally** (priority order). This is the repo-wide `▶ NEXT` pick
    that `/pjm` may use as its analysis engine; do not narrow it to a named plan unless that plan
    already wins under the same WIP, nearest-finish-line, defect, drift, and completion rules. Echo
-   the owning plan's `Model` + `Effort` on the `▶ NEXT` line so a fresh session can run it at the
-   right setting without reopening the plan. If the plan carries provider-specific routes, report both routes and the chosen default
-   (e.g. Codex/OpenAI `gpt-5.5 · high`; Claude Code `claude-opus-4-8 · high`;
-   default Codex/OpenAI).
-   If the plan is missing model/effort fields, say so and suggest `/audit-plans`.
+   the **picked slice's** `Run at:` tier on the `▶ NEXT` line so a fresh session can run it at the
+   right setting without reopening the plan — the slice line wins over the plan's
+   `Default run tier:`, and over the at-a-glance table if they disagree. Fall back to
+   `Default run tier:` when the slice carries no `Run at:` line, and say which one you used, because
+   "this slice was never tiered" is itself worth knowing. Report both provider routes and the chosen
+   default (e.g. Claude Code `claude-opus-4-8 · high`; Codex `gpt-5.5 · high`; default Claude Code).
+   Quote the slice's `Why this tier:` line when the slice's tier differs from the plan default —
+   that is exactly when a fresh session is most likely to reach for the wrong one.
+   If the plan is missing model/effort fields entirely, say so and suggest `/audit-plans`.
    a. A **diagnosed blocker/high defect** beats starting a new plan slice — a ready fix is the nearest finish line there is. Quote the defect's recommended fix as the task. Apply the same nearest-finish-line logic between defects and in-progress slices: whichever is closest to done wins.
    b. An `in-progress` plan — the **nearest finish line** always wins over starting something new. Pick its **first slice not marked ` ✅`** and quote that slice's `task:` string verbatim so it's paste-ready for a fresh Codex or Claude Code session, depending on the selected route.
    c. If nothing is `in-progress` and WIP < 2: offer to **start** the top `todo` plan's first task — flip that plan to `in-progress` (this is the start-time WIP gate) and quote the task.

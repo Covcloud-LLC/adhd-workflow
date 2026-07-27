@@ -38,9 +38,8 @@ end-to-end automation.
 ## Install
 
 The workflow itself is not Codex-specific. The same repo-native artifacts and handoff strings are
-meant to work from Codex or Claude Code. The installer below targets Codex's local skill/command
-layout; Claude Code users can use the same skill text from `skills/` and `commands/` in their
-Claude Code skill/command setup.
+meant to work from Codex or Claude Code. The installer below targets Codex's local skill layout;
+Claude Code users can use the same skill text from `skills/` in their Claude Code skill setup.
 
 ```bash
 git clone https://github.com/<you>/adhd-workflow.git
@@ -49,10 +48,9 @@ cd adhd-workflow
 ```
 
 The script symlinks each skill into `${CODEX_HOME:-~/.codex}/skills/`, including `wrap-up`, so
-the skills are available in **every** repo you open from Codex. It also installs legacy command
-copies for surfaces that still load command prompts. This repo stays the source of truth — edit a
-skill here and the change is live in your next compatible agent session. In Codex, start a new
-session, then type `/idea` or explicitly invoke `$idea` in any project.
+the skills are available in **every** repo you open from Codex. This repo stays the source of
+truth — edit a skill here and the change is live in your next compatible agent session. In Codex,
+start a new session, then type `/idea` or explicitly invoke `$idea` in any project.
 
 Use `--force` to replace files already at those paths (they get backed up to `<name>.bak`), and
 `--uninstall` to remove the symlinks.

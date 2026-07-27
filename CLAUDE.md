@@ -15,8 +15,7 @@ check is `bash scripts/check.sh`.
 
 ```
 skills/<name>/SKILL.md   the skills — this is the product
-commands/wrap-up.md      legacy command copy for surfaces that still load command prompts
-install.sh               symlinks skills, plus legacy command copies
+install.sh               symlinks skills
 scripts/slice-gate.sh    the slice gate — see docs/notes/slice-gate-convention.md
 scripts/check.sh         the whole-tree check: shell syntax + the gate's tests
 tests/gate_test.sh       the gate's test suite (bash tests/gate_test.sh)

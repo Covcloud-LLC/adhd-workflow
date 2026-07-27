@@ -13,7 +13,10 @@ gap for both readers.
 
 `$ARGUMENTS` = the contract to spec (a schema/endpoint/config name), a backlog ID, or a target file
 path. If it's a backlog ID, read its `task:` and `Verify:` lines from `docs/plans/` first — they
-define the scope and the gate.
+define the scope and the gate. Resolve `docs/plans/` via the same docs-root rule the lifecycle
+skills use: if `<backlog-root>/<repo>/` exists (where `<repo>` = basename of the git
+root), the plan lives at `<backlog-root>/<repo>/plans/`; otherwise it's the repo's own
+`./docs/plans/`.
 
 ## What this does / does not do
 

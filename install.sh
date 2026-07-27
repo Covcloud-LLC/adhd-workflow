@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install the ADHD workflow into ~/.codex by symlinking this repo's skills and legacy commands.
+# Install the ADHD workflow into ~/.codex by symlinking this repo's skills.
 # Re-run it any time; it is idempotent. Edits to the repo take effect immediately.
 #
 #   ./install.sh            # symlink, refusing to clobber anything unexpected
@@ -53,18 +53,13 @@ link() {
   echo "  linked   ${dst#"$CODEX_HOME"/}"
 }
 
-mkdir -p "$CODEX_HOME/skills" "$CODEX_HOME/commands"
+mkdir -p "$CODEX_HOME/skills"
 
 echo "ADHD workflow -> $CODEX_HOME"
 
 for dir in "$REPO"/skills/*/; do
   name="$(basename "$dir")"
   link "$REPO/skills/$name" "$CODEX_HOME/skills/$name"
-done
-
-for file in "$REPO"/commands/*.md; do
-  name="$(basename "$file")"
-  link "$REPO/commands/$name" "$CODEX_HOME/commands/$name"
 done
 
 echo
