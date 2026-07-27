@@ -42,7 +42,7 @@ must pass.
 ## Steps
 
 1. Resolve git root. Find the target idea in `docs/ideas/` (by slug, title, or the path/name the user gave). If ambiguous, list candidates and ask which. **Run the reasoning precondition above — refuse if it fails.**
-2. Read the idea. Read one or two existing plans in `docs/plans/` (e.g. the largest backlog) to match the **exact house format** — header block, `**ID — Title** · STATUS · depends:` item lines, indented `> task:` strings, and `Verify:` clauses.
+2. Read the idea. Read one or two existing plans in `docs/plans/` (e.g. the largest backlog) to match the **exact house format** — header block, `### <ID>-<n> — <Title>` slice headings each with a `> status:` line directly beneath, indented `> task:` strings, and `Verify:` clauses.
 3. Run the **rubric** below. If the idea lacks the substance to satisfy it, you have two moves:
    - If the missing pieces are things only the user knows (scope, acceptance criteria, which files), **refuse**: list each failed criterion and the specific question that would fix it. Stop. Do not write a plan.
    - If you can responsibly infer the missing structure from the repo and the idea, draft it — but show the user the inferences and let them correct before finalizing.
@@ -90,16 +90,26 @@ disagree, **the slice line wins.**
 
 ---
 
-**<ID>-1 — <task title>** · todo · depends: none
+### <ID>-1 — <task title>
+> status: todo · depends: none
 > Run at: Claude Code **<friendly-name> · <effort>** · Codex **<friendly-name> · <effort>**
 > Why this tier: <one line naming the specific latitude or trap that sets the tier>
 > task: Check: <the concrete test file/case agent A authors, with its key assertions — and nothing else>. Build: <the implementation work, self-contained: paths, contract, behavior>. Verify: <runnable command naming the check, e.g. pnpm test -t "<ID>-1">.
 
-**<ID>-2 — <task title>** · todo · depends: <ID>-1   <!-- plain shape: exempt or non-red-gated slices -->
+### <ID>-2 — <task title>   <!-- plain shape: exempt or non-red-gated slices -->
+> status: todo · depends: <ID>-1
 > Run at: Claude Code **<friendly-name> · <effort>** · Codex **<friendly-name> · <effort>**
 > Why this tier: <one line>
 > task: <self-contained prompt: paths, contract, behavior, tests>. Verify: <command/test/observable proof>.
 ```
+
+**A slice IS its `### <ID>-<n> — <title>` heading.** The whole toolchain keys on that heading:
+`/run-plan` and `/wrap-up` append the ` ✅` done marker to it, `/standup` and `/pjm` pick the
+first heading without one. A slice written any other way is invisible to all four. Status and
+dependencies live on the `> status: <status> · depends: <...>` line directly under the heading —
+never inline in the heading itself. (An older bold dialect — `**<ID>-n — <title>** · todo ·
+depends: none` as a paragraph line — exists in legacy plans; it is readable history, but never
+emit it. `/audit-plans` flags it for migration.)
 
 The `Check:` header names the command that proves the whole tree still works (build + full test
 suite). `/run-plan` refuses to drive a plan without it — no whole-tree check means no witness

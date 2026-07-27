@@ -90,45 +90,52 @@ thought-through," `/promote` gates "is the plan artifact well-formed to run cold
 
 ## Build backlog
 
-**ADHD-1 — `/idea` capture skill** · done · depends: none
+### ADHD-1 — `/idea` capture skill
+> status: done · depends: none
 > task: Global skill at `~/.claude/skills/idea/SKILL.md`. Writes `docs/ideas/<slug>.md`
 > (kebab slug, frontmatter `name/created/status: idea`, What/Why body) and stops — no
 > questions, no promotion. Verify: `/idea <thought>` creates the file and returns one
 > confirmation line. ✅ Created 2026-06-25.
 
-**ADHD-2 — `/promote` quality gate** · done · depends: ADHD-1
+### ADHD-2 — `/promote` quality gate
+> status: done · depends: ADHD-1
 > task: Global skill at `~/.claude/skills/promote/SKILL.md`. Reads an idea, applies the
 > rubric, refuses with named gaps on fail, else emits a house-format plan
 > (`status: todo`) and removes the idea file. Does NOT enforce WIP. Verify: a vague idea
 > is refused with specific gaps; a ripe one yields a well-formed `todo` plan. ✅ Created.
 
-**ADHD-3 — `/standup` daily driver + WIP gate** · done · depends: ADHD-2
+### ADHD-3 — `/standup` daily driver + WIP gate
+> status: done · depends: ADHD-2
 > task: Global skill at `~/.claude/skills/standup/SKILL.md`. Reads `docs/plans/*.md`,
 > reports WIP N/2, flags stalled (git last-touch >5d) and drifted plans, recommends
 > `_done/` archival, and ends with one `▶ NEXT` action (nearest finish line first).
 > Enforces WIP=2 at the todo→in-progress transition. Verify: with 2 in-progress plans,
 > refuses to start a 3rd; otherwise names one paste-ready task. ✅ Created.
 
-**ADHD-4 — `/audit-plans` weekly hygiene** · done · depends: ADHD-2
+### ADHD-4 — `/audit-plans` weekly hygiene
+> status: done · depends: ADHD-2
 > task: Global skill at `~/.claude/skills/audit-plans/SKILL.md`. Validates plans against
 > the rubric, flags malformed/orphaned/duplicate/stalled/WIP-violating items, groups
 > recommendations by action, mutates only on confirmation (prefer `git mv` to `_done/`).
 > Verify: run in a repo with a malformed plan and a stale idea → both flagged with the
 > fix. ✅ Created.
 
-**ADHD-5 — Seed `docs/ideas/` + `docs/plans/_done/` in active repos** · done · depends: ADHD-3
+### ADHD-5 — Seed `docs/ideas/` + `docs/plans/_done/` in active repos
+> status: done · depends: ADHD-3
 > task: In each repo I actively run this system in, create `docs/ideas/.gitkeep` and
 > `docs/plans/_done/.gitkeep` so the dirs exist before first use. Verify: `/standup` and
 > `/idea` run without having to create dirs on the fly. ✅ first repo seeded 2026-06-25;
 > the skills also create the dirs on demand, so seeding is a convenience, not a blocker.
 
-**ADHD-6 — (deferred) global multi-repo sweep** · todo · depends: ADHD-3
+### ADHD-6 — (deferred) global multi-repo sweep
+> status: todo · depends: ADHD-3
 > task: A `/standup-all` that fans out a read-only scan agent per repo in a registry and
 > synthesizes a cross-repo "which repo has abandoned work" view. Deferred — start
 > single-repo per the 2026-06-25 decision; revisit if per-repo runs prove insufficient.
 > Verify: N/A until picked up.
 
-**ADHD-7 — (deferred) scheduled standup nudge** · todo · depends: ADHD-3
+### ADHD-7 — (deferred) scheduled standup nudge
+> status: todo · depends: ADHD-3
 > task: Optional `/schedule` cloud routine that runs `/standup` each morning and posts a
 > summary, for days I forget the manual ritual. Deferred — manual-first per the decision;
 > add only if I find I skip it. Verify: N/A until picked up.

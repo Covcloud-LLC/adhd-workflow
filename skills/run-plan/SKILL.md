@@ -37,16 +37,21 @@ Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD
 Read the plan from the current repo's `docs/plans/<plan>.md`. Then check ALL of these, and on
 any failure **name the offending slice (or header) and refuse to start**:
 
-1. The plan carries a whole-tree **`> Check:`** header naming a runnable command.
-2. Run that command once. Exit 0 → baseline green, proceed. Exit 126/127 → this repo has **no
+1. The plan's slices are **`### <id> — <title>` headings** (the only dialect this runner speaks —
+   the ` ✅` stamp lands on that heading). A plan whose slices are legacy bold paragraph lines
+   (`**<ID>-n — …** · status · depends: …`) has no slices you can find or stamp: refuse and point
+   at `/audit-plans`, which offers the conversion.
+2. The plan carries a whole-tree **`> Check:`** header naming a runnable command.
+3. Run that command once. Exit 0 → baseline green, proceed. Exit 126/127 → this repo has **no
    witness**; refuse. Any other non-zero → the tree is already red; refuse (a red baseline
    destroys attribution).
-3. The working tree is **clean** (`git status --porcelain` is empty). Dirty → refuse.
-4. Every **open** slice (no trailing ` ✅`) has: an explicit **Check:** / **Build:** split in its
-   task string, and a **`Verify:`** that is a runnable command — not a description of a test to
-   be written. A doc/spike/design slice (exempt per `/promote`'s red-gate rule) has no machine
-   witness: name it and refuse — hand-run those via [[pjm]], or split the plan.
-5. Create a scratch directory OUTSIDE the repo (`mktemp -d`) for subagent reports. Reports never
+4. The working tree is **clean** (`git status --porcelain` is empty). Dirty → refuse.
+5. Every **open** slice (no trailing ` ✅` marker on its heading) has a **`Verify:`** that is a
+   runnable command — not a description of a test to be written — and either an explicit
+   **Check:** / **Build:** split in its task string, or a **named exemption** (see the
+   single-agent lane below). A non-exempt slice with no Check/Build split is a real authoring
+   defect: name it and refuse.
+6. Create a scratch directory OUTSIDE the repo (`mktemp -d`) for subagent reports. Reports never
    land in the tree — the tree belongs to the slices.
 
 ## 1 · The per-slice loop — strictly serial, in plan order

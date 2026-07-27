@@ -107,8 +107,11 @@ The orchestration loop is:
 1. Re-sweep the target plan and repo state.
 2. Pick the next allowed action using `/standup` rules, narrowed to the named plan unless global
    WIP or an unmerged in-flight branch forces a nearer finish line. Within the named plan, find
-   the **first slice heading not marked ` ✅`** and use that slice's verbatim `task:` string as the
-   execution handoff.
+   the **first `### <id> — …` slice heading not marked ` ✅`** (any marker variant counts as done:
+   bare ` ✅`, or provenance-stamped ` ✅ (<command>, <sha>)`) and use that slice's verbatim
+   `task:` string as the execution handoff. Slices exist only as `### ` headings — a legacy
+   bold-dialect plan (`**<ID>-n — …** · status` paragraph lines) has no findable slices; route it
+   to `/audit-plans` for migration instead of guessing.
 3. Prepare the handoff exactly:
    - Copy the verbatim `task:` string to the clipboard with `pbcopy`.
    - Show the same task string inline in the PJM response so the user can inspect what was copied.
