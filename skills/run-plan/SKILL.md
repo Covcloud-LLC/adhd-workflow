@@ -66,8 +66,12 @@ at step 0.
 
 1. **Spawn agent A** with the slice's **Check: text only** — plus: "Author the check described.
    Implement nothing else. Do not run the plan's other commands, do not read the plan file, do
-   not commit. Write your notes to `<scratch>/<slice-id>-A.md`." A returns; you read **nothing**
-   it says.
+   not commit. Write your notes to `<scratch>/<slice-id>-A.md`. If the task is genuinely
+   ambiguous — two readings that produce materially different checks — and you have **not yet
+   written anything**, write the question to `<scratch>/<slice-id>-QUESTION.md` and exit with
+   code 3; do not guess, and do not ask once you have started writing." A returns; you read
+   **nothing** it says — but if `<slice-id>-QUESTION.md` exists (or A exited 3), take the
+   **question exit** (section 3b).
 2. **A's check paths are defined by git, not by A's report**: they are exactly the paths
    `git status --porcelain` now lists. If it lists nothing, halt (A produced no check).
 3. **Preflight**: run `bash <gate> preflight '<Verify-command>' <check-paths...>` — directly,
@@ -107,8 +111,12 @@ there is nothing to red-test. Refusing them would refuse plans `/promote` told t
 write. They run, with a weaker gate:
 
 1. **Spawn one agent** with the slice's **whole task string** — plus: "Do not read the plan
-   file, do not commit. Write your notes to `<scratch>/<slice-id>.md`." No A/B pair. The agent
-   returns; you read **nothing** it says.
+   file, do not commit. Write your notes to `<scratch>/<slice-id>.md`. If the task is genuinely
+   ambiguous and you have **not yet written anything**, write the question to
+   `<scratch>/<slice-id>-QUESTION.md` and exit with code 3; do not guess, and do not ask once
+   you have started writing." No A/B pair. The agent returns; you read **nothing** it says —
+   but if `<slice-id>-QUESTION.md` exists (or the agent exited 3), take the **question exit**
+   (section 3b).
 2. **No preflight, no check-files-untouched assertion.** There is no independent check to go
    red and no agent-A files to protect — skip both, deliberately, not silently.
 3. **Postflight**: run the plan's whole-tree **`> Check:`** command directly (un-piped, `$?`
@@ -150,6 +158,28 @@ second try, ever. A flaky-looking red is still a red; retrying is interpretation
 slice id, the exact failing command, its exit code, and the scratch-dir paths. The resume point
 is already in `git log`.
 
+## 3b · The question exit — bounded, pre-build only
+
+A subagent that hits a **genuine ambiguity** may surface it instead of guessing — through one
+narrow door, code **3** (the gate already owns 0, 1, and 2): it writes the question to
+`<scratch>/<slice-id>-QUESTION.md` and exits 3, having written **nothing else**.
+
+- **You relay; you never interpret.** On the question exit: halt the run, name the slice, and
+  print the question file **verbatim**. Do not answer it, do not guess, do not rank the options,
+  do not add your own reading of the task. An orchestrator with an opinion about the work is the
+  rejected design wearing a new hat.
+- **A question is legal only before the build starts** — agent A, or the single agent of an
+  exempt slice, before it has written anything. Agent B has no question exit, and neither does
+  any agent that has already started writing: once implementation has begun, the answer is
+  **halt**, not negotiate. A mid-build question is usually "I got stuck" wearing a question
+  mark, and letting it reopen the task is how an orchestrator turns into a chat session — the
+  task string was accepted at `/promote` time; if it stops being executable mid-build, that is a
+  failure to report, not a conversation to have.
+- **Resume is the normal resume.** The user answers by **editing the slice's task string** to
+  remove the ambiguity, then re-invoking `/run-plan`, which resumes from `git log` exactly as
+  after any halt. There is no answer-passing channel — the fixed task string IS the answer, and
+  it lands where the answer belongs: in the plan, where the next cold session reads it too.
+
 ## 4 · Resume
 
 On re-invocation for the same plan:
@@ -166,8 +196,10 @@ On re-invocation for the same plan:
 ## 5 · Report
 
 When the run halts or completes, report: slices completed this run (id → build-commit sha),
-the halt (slice id + failing command + exit code) if any, whole-tree check status, scratch-dir
-path, and the reminder that nothing was pushed. If every slice is now ` ✅`, recommend the plan's
+the halt if any — **labelled by kind**: a **red-gate halt** (slice id + failing command + exit
+code) or a **question halt** (slice id + the question file printed verbatim + the reminder that
+the answer is an edit to that slice's task string, then re-invoke `/run-plan`) — whole-tree
+check status, scratch-dir path, and the reminder that nothing was pushed. If every slice is now ` ✅`, recommend the plan's
 completion flip but do not perform it — that is `/wrap-up`'s call with the user present.
 
 End with the single breadcrumb: when the run is over — halted or done — run `/wrap-up` to
