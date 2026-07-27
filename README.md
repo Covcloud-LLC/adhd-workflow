@@ -84,6 +84,13 @@ Plus the supporting cast:
 Everything reads and writes the **current repo's** `docs/` directory. Nothing is global except
 the skills themselves.
 
+Optional: if you keep your backlogs in one central git repo instead of per-repo `docs/`
+directories, write that repo's absolute path (one line) to `~/.config/adhd-workflow/backlog-root`.
+When `<backlog-root>/<repo-name>/` exists, the skills use it as the docs root for that repo —
+`ideas/`, `plans/`, `defects/`, and `BOARD.md` live directly under it — and auto-commit-and-push
+writes there. Reasoning notes always stay in the code repo's own `docs/notes/`. No config file,
+no change: everything stays per-repo.
+
 Model-sensitive handoffs are provider-qualified. A plan should name an OpenAI route, a Claude
 route, and a recommended default between them for the surface you're using, for example Codex/OpenAI
 `gpt-5.5 · high` or Claude Code `claude-opus-4-8 · high`.

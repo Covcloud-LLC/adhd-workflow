@@ -22,7 +22,7 @@ plus the delegation mechanics.
 Before reading or writing any lifecycle doc, resolve the **docs root**:
 
 - Let `<repo>` = basename of the current repo's git root (`basename "$(git rev-parse --show-toplevel)"`).
-- If `<backlog-root>/<repo>/` exists, **that dir is the docs root** — `ideas/`, `plans/` (with `_done/`), `defects/`, and `BOARD.md` live directly under it (there is **no `docs/` path segment** inside the metarepo).
+- If the config file `~/.config/adhd-workflow/backlog-root` exists, read it: it holds one line, the absolute path of a **backlog metarepo** (a git repo that centralizes backlog docs for many code repos) — call it `<backlog-root>`. If `<backlog-root>/<repo>/` exists, **that dir is the docs root** — `ideas/`, `plans/` (with `_done/`), `defects/`, and `BOARD.md` live directly under it (there is **no `docs/` path segment** inside the metarepo).
 - Otherwise fall back to `./docs/` in the current repo, exactly as before.
 
 Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD.md` mean paths under the resolved docs root. **Reasoning notes are the exception: `docs/notes/` ALWAYS stays in the current code repo's own `./docs/notes/`, never the metarepo.** Paths written *inside* a plan/idea/defect are relative to the code repo, not the metarepo.

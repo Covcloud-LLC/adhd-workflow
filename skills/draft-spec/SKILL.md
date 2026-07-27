@@ -7,16 +7,17 @@ description: Draft a Diátaxis reference/contract spec for the CURRENT repo's sh
 
 Produce a **grep-verified reference document** for a contract in the current repo: a schema, an API
 payload, a config surface, a field catalog. The readers are developers **and context-collecting
-bots** (cross-repo harvesters like `a-knowledge-base-repo`), so the output is fact-dense and
+bots** (cross-repo knowledge-base harvesters), so the output is fact-dense and
 machine-scannable — tables, schemas, field lists. A stale or invented value is worse than a marked
 gap for both readers.
 
 `$ARGUMENTS` = the contract to spec (a schema/endpoint/config name), a backlog ID, or a target file
 path. If it's a backlog ID, read its `task:` and `Verify:` lines from `docs/plans/` first — they
 define the scope and the gate. Resolve `docs/plans/` via the same docs-root rule the lifecycle
-skills use: if `<backlog-root>/<repo>/` exists (where `<repo>` = basename of the git
-root), the plan lives at `<backlog-root>/<repo>/plans/`; otherwise it's the repo's own
-`./docs/plans/`.
+skills use: if the config file `~/.config/adhd-workflow/backlog-root` exists (it holds the absolute
+path of a backlog metarepo — `<backlog-root>`) and `<backlog-root>/<repo>/` exists (where `<repo>` =
+basename of the git root), the plan lives at `<backlog-root>/<repo>/plans/`; otherwise it's the
+repo's own `./docs/plans/`.
 
 ## What this does / does not do
 
