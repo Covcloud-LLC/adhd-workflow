@@ -11,7 +11,10 @@ five: reconcile plan status → capture knowledge → queue shipped-doc work →
 action to the `/pjm` session → nudge weekly hygiene only when it's actually needed.
 
 This normally runs in an **execution session** (the one that just ran the slice), where the
-just-finished work and its learnings are fresh. The "what's next" decision is NOT wrap-up's job
+just-finished work and its learnings are fresh. `/run-plan` also invokes this skill itself when
+a run ends (clean or halted) — machine invocation changes **nothing** below: every
+confirm-before-writing rule holds, and there is no machine-confirm mode (the slice-gate
+convention says why there never will be). The "what's next" decision is NOT wrap-up's job
 in the current model — the long-running `/pjm` session owns it (see step 4).
 
 **Cardinal rule: never flip a status silently.** Recommend the change, then act on the user's

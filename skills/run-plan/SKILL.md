@@ -202,5 +202,14 @@ the answer is an edit to that slice's task string, then re-invoke `/run-plan`) �
 check status, scratch-dir path, and the reminder that nothing was pushed. If every slice is now ` ✅`, recommend the plan's
 completion flip but do not perform it — that is `/wrap-up`'s call with the user present.
 
-End with the single breadcrumb: when the run is over — halted or done — run `/wrap-up` to
-reconcile the plan and capture what was learned.
+## 6 · End of run — invoke `/wrap-up` yourself
+
+When the run ends — clean completion **or** halt, either kind — deliver the report above, then
+**invoke the `wrap-up` skill** rather than ending with a breadcrumb telling the user to run it.
+Once per run, never per slice: the ` ✅` stamp already reconciled each slice mechanically, and
+`/wrap-up` is a session-level ritual — running it nine times in a nine-slice run would grind its
+confirms into noise the user stops reading. Machine invocation changes nothing about `/wrap-up`
+itself: it keeps every confirm-before-writing rule — it still asks before flipping plan status
+or archiving to `_done/`, and it must never gain a machine-confirms mode (the slice-gate
+convention says why). That is the point of calling it: the run ends by handing the human the
+reconciliation seat with the report already on screen, instead of leaving a chore behind.
