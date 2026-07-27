@@ -145,7 +145,7 @@ task asked; the whole-tree green only proves it broke nothing.
   you matched at start has changed or moved, **abort the run** and tell the user what completed.
   Do not reconcile a concurrent hand-edit — "the file moved under me, here's what finished, you
   drive" is always correct.
-- **Model tier**: spawn A and B at the slice's `Run at:` tier, falling back to the plan's
+- **Model tier**: spawn every agent — A, B, or an exempt slice's single agent — at the slice's `Run at:` tier, falling back to the plan's
   `Default run tier:` header when the slice carries no `Run at:` line. The slice line always wins —
   over the plan default and over the plan's at-a-glance table. Legacy plans may carry the older
   `Model:` / `Effort:` header instead; read it the same way and do not refuse over it.
