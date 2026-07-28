@@ -55,7 +55,7 @@ Two sub-options inside C were considered and rejected:
 ## The gate
 
 **The check does not exist before the slice runs — the slice writes it.** Confirmed by grepping 122
-`Verify:` clauses across real `repo-B` and `repo-A` plans: every one describes a test to be
+`Verify:` clauses across two real client repos' plans: every one describes a test to be
 authored ("a bundle test transforms…", "a unit test extracts…"), not a command to run. A naive
 preflight would therefore go red because the *test file is missing*, not because the *behavior* is —
 and at the exit-code level those are the same number.
@@ -181,7 +181,7 @@ would make every legacy plan fan out and shred itself. A `parallel-safe` marker 
 - **The smoke test must not double as the acceptance test.** A suite authored *in order to be gated by
   this runner* is not an independent witness of the runner — the tests get shaped, unconsciously,
   toward what the gate can check. Smoke the loop mechanics here, on the gate script's own shell tests.
-  Do the first real drive in a repo whose suite predates the runner (`repo-A`, `pnpm test`), on a
+  Do the first real drive in a repo whose suite predates the runner (a client repo with a pre-existing `pnpm test` suite), on a
   throwaway two-slice plan where **slice 2 is deliberately made to fail** — halt-and-resume is the
   path that will actually be depended on and the one nobody ever tests.
 - **Near-zero intervention may measure detection, not reliability.** It is also what a blind feedback

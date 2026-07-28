@@ -11,7 +11,10 @@ five: reconcile plan status → capture knowledge → queue shipped-doc work →
 action to the `/pjm` session → nudge weekly hygiene only when it's actually needed.
 
 This normally runs in an **execution session** (the one that just ran the slice), where the
-just-finished work and its learnings are fresh. The "what's next" decision is NOT wrap-up's job
+just-finished work and its learnings are fresh. `/run-plan` also invokes this skill itself when
+a run ends (clean or halted) — machine invocation changes **nothing** below: every
+confirm-before-writing rule holds, and there is no machine-confirm mode (the slice-gate
+convention says why there never will be). The "what's next" decision is NOT wrap-up's job
 in the current model — the long-running `/pjm` session owns it (see step 4).
 
 **Cardinal rule: never flip a status silently.** Recommend the change, then act on the user's
@@ -22,7 +25,7 @@ confirmation. Only persist things actually discussed or demonstrated — never f
 Before reading or writing any lifecycle doc, resolve the **docs root**:
 
 - Let `<repo>` = basename of the current repo's git root (`basename "$(git rev-parse --show-toplevel)"`).
-- If `<backlog-root>/<repo>/` exists, **that dir is the docs root** — `ideas/`, `plans/` (with `_done/`), `defects/`, and `BOARD.md` live directly under it (there is **no `docs/` path segment** inside the metarepo).
+- If the config file `~/.config/adhd-workflow/backlog-root` exists, read it: it holds one line, the absolute path of a **backlog metarepo** (a git repo that centralizes backlog docs for many code repos) — call it `<backlog-root>`. If `<backlog-root>/<repo>/` exists, **that dir is the docs root** — `ideas/`, `plans/` (with `_done/`), `defects/`, and `BOARD.md` live directly under it (there is **no `docs/` path segment** inside the metarepo).
 - Otherwise fall back to `./docs/` in the current repo, exactly as before.
 
 Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD.md` mean paths under the resolved docs root. **Reasoning notes are the exception: `docs/notes/` ALWAYS stays in the current code repo's own `./docs/notes/`, never the metarepo.** Paths written *inside* a plan/idea/defect are relative to the code repo, not the metarepo.
@@ -42,7 +45,9 @@ Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD
   standup will re-offer the slice you just finished.
 - **The slice gate** (the convention in the workflow repo's `docs/notes/slice-gate-convention.md`)
   is the other legitimate writer of this marker: `/run-plan`'s orchestrator stamps a slice
-  ` ✅ (<command>, <sha>)` only after the gate's five machine facts pass. A slice arriving with a
+  ` ✅ (<command>, <sha>)` only after the gate's five machine facts pass, or
+  ` ✅ (<command>, single-agent)` for a red-gate-exempt slice witnessed by the whole-tree check
+  alone (the weaker of the two — the provenance says which). A slice arriving with a
   provenance-stamped marker is already done — reconcile around it, don't re-confirm it. For
   hand-run slices the user's confirm above IS the gate; wrap-up has no machine-confirm mode and
   must never gain one (the convention note says why).

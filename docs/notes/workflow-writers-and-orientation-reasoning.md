@@ -46,7 +46,7 @@ source or the running service · one fact, one home · six-field front-matter (b
 
 ### 3. Bots are first-class readers — standardize front-matter once
 
-Cross-repo harvesting (e.g. `a-knowledge-base-repo`) is frequent, so shipped-doc front-matter is a
+Cross-repo harvesting (a knowledge-base repo scraping shipped docs) is frequent, so shipped-doc front-matter is a
 contract. Six fields, emitted by the writer skills, never hand-typed:
 
 ```yaml

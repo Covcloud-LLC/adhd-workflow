@@ -53,8 +53,12 @@ description: <what it does> Use when the user types /promote, or says "…", "�
 - The skills address the user's ADHD directly and are deliberately blunt about it (`/promote`
   "refusing is a success, not a failure"). Keep that voice. It is load-bearing, not decoration.
 
-Skills always read and write the **current repo's** `docs/` directory — never a global path and
-never a hardcoded absolute path. The only global thing is the skill file itself.
+Skills read and write the **current repo's** `docs/` directory by default — never a hardcoded
+absolute path. The one sanctioned indirection is the optional **backlog metarepo**: when
+`~/.config/adhd-workflow/backlog-root` names a metarepo and it has a dir for the current repo,
+the lifecycle skills resolve their docs root there instead (see any skill's "Docs root"
+section; reasoning notes always stay in the code repo). Beyond that, the only global thing is
+the skill file itself.
 
 ## Shared conventions the skills depend on
 

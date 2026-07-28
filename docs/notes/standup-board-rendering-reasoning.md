@@ -9,7 +9,7 @@ header, and must be excluded from `/standup`'s own plan sweep so it can't self-p
 **Why:** The two halves of the idea have very different cost profiles. A richer ephemeral render
 is nearly free and drift-proof, so it should just be the default. A persisted artifact is what
 the user actually keeps reaching for (they hand-maintain `docs/plans/00-master-index.md` in
-repo-A), but writing it on *every* standup churns git and re-introduces the drift the system
+another project), but writing it on *every* standup churns git and re-introduces the drift the system
 avoids — so it belongs behind an explicit flag, regenerated from the plan files each time.
 
 ## Options considered
@@ -41,7 +41,7 @@ avoids — so it belongs behind an explicit flag, regenerated from the plan file
   edit" header; hand edits are overwritten on next run. The plan should state this contract.
 - **Columns / "status details" per row:** define the row schema — plan, status, slices done/total,
   next open slice, last-touched, model/effort. Defer exact set to the plan.
-- **Relationship to repo-A's hand-built `00-master-index.md`:** decide whether `--board` is
+- **Relationship to an existing hand-built `00-master-index.md`:** decide whether `--board` is
   meant to converge that per-project pattern or coexist with it. Not blocking, but name it.
 - **Skill vs flag:** `--board` on `/standup` vs a separate tiny skill. Lean flag (shares the same
   plan-parsing pass standup already does; a separate skill would duplicate it).
