@@ -90,21 +90,21 @@ thought-through," `/promote` gates "is the plan artifact well-formed to run cold
 
 ## Build backlog
 
-### ADHD-1 — `/idea` capture skill
+### ADHD-1 — `/idea` capture skill ✅
 > status: done · depends: none
 > task: Global skill at `~/.claude/skills/idea/SKILL.md`. Writes `docs/ideas/<slug>.md`
 > (kebab slug, frontmatter `name/created/status: idea`, What/Why body) and stops — no
 > questions, no promotion. Verify: `/idea <thought>` creates the file and returns one
 > confirmation line. ✅ Created 2026-06-25.
 
-### ADHD-2 — `/promote` quality gate
+### ADHD-2 — `/promote` quality gate ✅
 > status: done · depends: ADHD-1
 > task: Global skill at `~/.claude/skills/promote/SKILL.md`. Reads an idea, applies the
 > rubric, refuses with named gaps on fail, else emits a house-format plan
 > (`status: todo`) and removes the idea file. Does NOT enforce WIP. Verify: a vague idea
 > is refused with specific gaps; a ripe one yields a well-formed `todo` plan. ✅ Created.
 
-### ADHD-3 — `/standup` daily driver + WIP gate
+### ADHD-3 — `/standup` daily driver + WIP gate ✅
 > status: done · depends: ADHD-2
 > task: Global skill at `~/.claude/skills/standup/SKILL.md`. Reads `docs/plans/*.md`,
 > reports WIP N/2, flags stalled (git last-touch >5d) and drifted plans, recommends
@@ -112,7 +112,7 @@ thought-through," `/promote` gates "is the plan artifact well-formed to run cold
 > Enforces WIP=2 at the todo→in-progress transition. Verify: with 2 in-progress plans,
 > refuses to start a 3rd; otherwise names one paste-ready task. ✅ Created.
 
-### ADHD-4 — `/audit-plans` weekly hygiene
+### ADHD-4 — `/audit-plans` weekly hygiene ✅
 > status: done · depends: ADHD-2
 > task: Global skill at `~/.claude/skills/audit-plans/SKILL.md`. Validates plans against
 > the rubric, flags malformed/orphaned/duplicate/stalled/WIP-violating items, groups
@@ -120,7 +120,7 @@ thought-through," `/promote` gates "is the plan artifact well-formed to run cold
 > Verify: run in a repo with a malformed plan and a stale idea → both flagged with the
 > fix. ✅ Created.
 
-### ADHD-5 — Seed `docs/ideas/` + `docs/plans/_done/` in active repos
+### ADHD-5 — Seed `docs/ideas/` + `docs/plans/_done/` in active repos ✅
 > status: done · depends: ADHD-3
 > task: In each repo I actively run this system in, create `docs/ideas/.gitkeep` and
 > `docs/plans/_done/.gitkeep` so the dirs exist before first use. Verify: `/standup` and

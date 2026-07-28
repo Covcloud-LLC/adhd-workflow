@@ -34,7 +34,8 @@ Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD
 
 ## 0 · Validate before slice 1 — refuse loudly, not at slice 4
 
-Read the plan from the current repo's `docs/plans/<plan>.md`. Then check ALL of these, and on
+Read the plan from the resolved docs root's `docs/plans/<plan>.md` (the "Docs root" section
+above — the plan may live in the backlog metarepo). Then check ALL of these, and on
 any failure **name the offending slice (or header) and refuse to start**:
 
 1. The plan's slices are **`### <id> — <title>` headings** (the only dialect this runner speaks —
@@ -46,11 +47,12 @@ any failure **name the offending slice (or header) and refuse to start**:
    witness**; refuse. Any other non-zero → the tree is already red; refuse (a red baseline
    destroys attribution).
 4. The working tree is **clean** (`git status --porcelain` is empty). Dirty → refuse.
-5. Every **open** slice (no trailing ` ✅` marker on its heading) has a **`Verify:`** that is a
-   runnable command — not a description of a test to be written — and either an explicit
-   **Check:** / **Build:** split in its task string, or a **named exemption** (see the
-   single-agent lane below). A non-exempt slice with no Check/Build split is a real authoring
-   defect: name it and refuse.
+5. Every **open** slice (no trailing ` ✅` marker on its heading) fits one of the two lanes:
+   either its task string has an explicit **Check:** / **Build:** split AND a **`Verify:`**
+   that is a runnable command — not a description of a test to be written — or its task string
+   **names an exemption** (single-agent lane below; its witness is the whole-tree `Check:`
+   command, so its `Verify:` may be an observable rather than a command). A slice with neither
+   split nor named exemption is a real authoring defect: name it and refuse.
 6. Create a scratch directory OUTSIDE the repo (`mktemp -d`) for subagent reports. Reports never
    land in the tree — the tree belongs to the slices.
 
@@ -97,11 +99,17 @@ at step 0.
    — provenance is the command that went green and the check commit it ran against. Then commit
    B's work **and** the stamped plan file together as `<slice-id>: <slice title>`. The marker
    and the work land atomically; a crash before this commit leaves no marker and a dirty tree,
-   which resume (below) treats as a partial slice.
+   which resume (below) treats as a partial slice. **Metarepo docs root:** the plan file then
+   lives in a different git repo and cannot share the work's commit — commit B's work in the
+   code repo first (that commit is the durable record resume reads), then stamp the plan file
+   and let the metarepo rule commit-and-push it. A crash between the two leaves a landed build
+   commit with no marker, which resume already handles (re-stamp, not re-run).
 8. Next slice.
 
-Two commits per slice, both tagged with the slice id. **Commit, never push** — a local commit is
-reversible; a push is not. The user pushes.
+Two commits per two-agent slice, one per single-agent slice — every commit tagged with the
+slice id. **Commit, never push, in the code repo** — a local commit is reversible; a push is
+not. The user pushes. (The one push exception is the docs-root metarepo: when the plan file
+lives there, its stamp writes follow the metarepo's own commit-and-push rule.)
 
 ## 1b · The single-agent lane — exempt slices
 
@@ -123,7 +131,8 @@ write. They run, with a weaker gate:
    immediately). Exit 0 → proceed. Anything else → **Halt.**
 4. **Stamp and land**: append ` ✅ (<Check-header-command>, single-agent)` to the slice's
    `### <id>` heading and commit the work and the stamped plan file together as
-   `<slice-id>: <slice title>`. One commit, not two.
+   `<slice-id>: <slice title>`. One commit, not two. (Metarepo docs root: same split as the
+   two-agent step 7 — work commit in the code repo first, stamp follows via the metarepo rule.)
 
 **This gate is weaker, and the stamp says so.** The two-agent stamp names a check authored by a
 party with no stake in the implementation; `single-agent` in the provenance tells a reader three
