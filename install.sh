@@ -62,6 +62,14 @@ for dir in "$REPO"/skills/*/; do
   link "$REPO/skills/$name" "$CODEX_HOME/skills/$name"
 done
 
+# Output styles are a Claude Code concept; Codex has no equivalent and ignores the
+# directory. Linking them unconditionally keeps one installer for both agents.
+mkdir -p "$CODEX_HOME/output-styles"
+
+for f in "$REPO"/output-styles/*.md; do
+  link "$f" "$CODEX_HOME/output-styles/$(basename "$f")"
+done
+
 echo
 if [ "$UNINSTALL" -eq 1 ]; then
   echo "Uninstalled. Symlinks pointing elsewhere were left alone."

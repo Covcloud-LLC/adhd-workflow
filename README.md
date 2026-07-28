@@ -55,6 +55,12 @@ start a new session, then type `/idea` or explicitly invoke `$idea` in any proje
 Use `--force` to replace files already at those paths (they get backed up to `<name>.bak`), and
 `--uninstall` to remove the symlinks.
 
+The installer also links `output-styles/adhd.md` into `${CODEX_HOME:-~/.codex}/output-styles/`.
+That one is **Claude Code only** — output styles have no Codex equivalent, so under Codex the
+directory is created and then ignored. Claude Code users pick it up with `/config` → Output style
+→ `ADHD`, or by setting `"outputStyle": "ADHD"` in `settings.json`. It shapes the prose around a
+skill's report, never the report format itself.
+
 ## The workflow triggers
 
 | Stage | Trigger | What it does | Output |
@@ -167,4 +173,5 @@ a pull request.
 
 ## License
 
-MIT
+MIT. `output-styles/adhd.md` is adapted from
+[`ayghri/i-have-adhd`](https://github.com/ayghri/i-have-adhd) (MIT) — see [NOTICE.md](NOTICE.md).
