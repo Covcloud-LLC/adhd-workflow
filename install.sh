@@ -67,6 +67,9 @@ done
 mkdir -p "$CODEX_HOME/output-styles"
 
 for f in "$REPO"/output-styles/*.md; do
+  # An unmatched glob stays literal, and `ln -s` happily makes a dangling link
+  # named `*.md` rather than failing. Skip the non-file instead.
+  [ -f "$f" ] || continue
   link "$f" "$CODEX_HOME/output-styles/$(basename "$f")"
 done
 

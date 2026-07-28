@@ -55,11 +55,20 @@ start a new session, then type `/idea` or explicitly invoke `$idea` in any proje
 Use `--force` to replace files already at those paths (they get backed up to `<name>.bak`), and
 `--uninstall` to remove the symlinks.
 
-The installer also links `output-styles/adhd.md` into `${CODEX_HOME:-~/.codex}/output-styles/`.
-That one is **Claude Code only** — output styles have no Codex equivalent, so under Codex the
-directory is created and then ignored. Claude Code users pick it up with `/config` → Output style
-→ `ADHD`, or by setting `"outputStyle": "ADHD"` in `settings.json`. It shapes the prose around a
-skill's report, never the report format itself.
+The installer also links everything in `output-styles/` into
+`${CODEX_HOME:-~/.codex}/output-styles/`. Those are **Claude Code only** — output styles have no
+Codex equivalent, so under Codex the directory is created and then ignored.
+
+Claude Code reads output styles from its own config directory, so the default `CODEX_HOME` puts
+them somewhere Claude Code will never look. Point `CODEX_HOME` at your Claude config directory
+when you install:
+
+```bash
+CODEX_HOME=~/.claude ./install.sh
+```
+
+Then select the style with `/config` → Output style → `ADHD`, or set `"outputStyle": "ADHD"` in
+`settings.json`. It shapes the prose around a skill's report, never the report format itself.
 
 ## The workflow triggers
 
