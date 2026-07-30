@@ -68,27 +68,38 @@ Changing any of these means changing several skills at once:
 |---|---|---|---|
 | `reasoned:` frontmatter stamp on an idea | passed the reasoning gate | `/reason` | `/promote` |
 | trailing ` ✅` on a `### <id>` slice heading | that slice is done | `/wrap-up` | `/standup` |
-| `Model` + `Effort` header on a plan | what tier to execute it at | `/promote` | `/standup`, `/audit-plans` |
+| `> Default run tier:` header on a plan | both provider routes + effort, for slices with no override | `/promote` | `/standup`, `/pjm`, `/audit-plans`, `/run-plan` |
+| `> Run at:` line on a slice | the tier that slice runs at; always beats the plan default | `/promote` | `/standup`, `/run-plan` |
 | WIP cap of 2 `in-progress` plans | the finish-what-you-start rule | — | `/standup` (the only place a plan goes `in-progress`) |
 | `docs/plans/_done/` | completed plans are archived, never deleted | `/wrap-up` | `/audit-plans` |
 | the slice gate — `scripts/slice-gate.sh` | the five machine facts behind a machine-written ` ✅`; see `docs/notes/slice-gate-convention.md` | orchestrator only (never a subagent) | `/run-plan`, `/wrap-up` |
 | `## What this plan will actually do` + `## Decisions this plan makes` sections, read back before write | the plan's brief and the decisions the decomposition added | `/promote` | `/audit-plans` (flag + drift spot-check), `/run-plan` (launch echo) |
+
+The legacy four-line `Model:`/`OpenAI:`/`Claude:`/`Recommended:` header is **readable but
+deprecated** — `/promote` must never emit it, and `/audit-plans` flags it for migration.
 
 `docs/plans/` is **task-tracked work only.** Design, decision, and reference docs go in
 `docs/notes/`.
 
 ## Dogfooding
 
-This repo uses its own workflow on itself. `docs/ideas/`, `docs/notes/`, and `docs/plans/_done/`
-hold real artifacts, and they double as the worked example readers learn from — so they should
-stay well-formed.
+This repo uses its own workflow on itself, but its lifecycle docs are **not** in this repo. The
+maintainer's `~/.config/adhd-workflow/backlog-root` points at a backlog metarepo with a dir for
+this repo, so the skills resolve the docs root there: `ideas/`, `plans/` (with `_done/`), and
+`defects/` live in that metarepo. Only `docs/notes/` stays here, and it doubles as the worked
+example readers learn from — so it should stay well-formed.
+
+Consequence: if you are looking for a plan or idea for this repo and `docs/plans/` doesn't exist,
+that is expected, not a missing file. Resolve the docs root the way the skills do (read
+`~/.config/adhd-workflow/backlog-root`, then look for `<backlog-root>/adhd-workflow/`) instead of
+assuming a path.
 
 To change a skill, capture the idea with `/idea` and run `/reason` on it first, rather than
 editing the skill directly. The one exception is a typo or broken link.
 
-Note that the archived plans in `docs/plans/_done/` describe editing paths under `~/.claude/…`.
-That is historical: the skills lived in a dotfiles repo before this one. Don't "fix" those paths —
-they're a record of what was done at the time.
+Some archived plans in that metarepo describe editing paths under `~/.claude/…` directly. That is
+historical: the skills lived in a dotfiles repo before this one. Don't "fix" those paths — they're
+a record of what was done at the time.
 
 ## Verifying a change
 

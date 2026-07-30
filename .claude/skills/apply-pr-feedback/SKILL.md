@@ -1,14 +1,14 @@
 ---
 name: apply-pr-feedback
-description: Review PR feedback critically, apply only the suggestions you concur with, and explain your reasoning for each decision.
-argument-hint: '<PR number or URL>'
+description: Review PR feedback critically, apply only the suggestions you concur with, and explain your reasoning for each decision. Pass --merge to also commit, push, and merge the branch once the checks pass.
+argument-hint: '<PR number or URL> [--merge]'
 ---
 
 # Apply PR Feedback
 
 Review feedback on a pull request, critically evaluate each comment, and apply only the changes you agree with as an experienced developer. You are expected to exercise independent judgment — not blindly accept every suggestion.
 
-> **Solo-repo note:** Ken is the only human on this repo; reviews come from bots
+> **Solo-repo note:** The maintainer is the only human on this repo; reviews come from bots
 > (`copilot-pull-request-reviewer`, `chatgpt-codex-connector`). Bot findings are
 > plausible-but-sometimes-wrong — verify every claim against the actual code/behavior before
 > applying (run the code path, check the tool's real matching semantics, etc.). Never post
@@ -75,7 +75,7 @@ For EACH feedback item, evaluate it against these criteria:
 
 1. **Is it correct?** Does the suggestion actually fix a problem or improve the prose/script? Verify by reading the relevant file and, for skill prose, walking the skill's own steps against this repo's `docs/`.
 2. **Does it align with project patterns?** Check `CLAUDE.md`, `AGENTS.md`, the settled decisions in `docs/notes/*-reasoning.md`, and `docs/notes/slice-gate-convention.md`. Reject suggestions that contradict the locked invariants:
-   - **The product is the prose, and it is live.** `skills/*/SKILL.md` are symlinked into `~/.claude/skills/` — an edit here changes Ken's next session in every repo. Read the whole `SKILL.md` before changing it; no speculative edits.
+   - **The product is the prose, and it is live.** `skills/*/SKILL.md` are symlinked into `~/.claude/skills/` — an edit here changes the maintainer's next session in every repo. Read the whole `SKILL.md` before changing it; no speculative edits.
    - **Settled decisions stay settled.** `docs/notes/*-reasoning.md` and `docs/plans/_done/` record decisions that were reasoned or adversarially workshopped. A bot suggestion that quietly reverses one (e.g. re-adding parallelism to `/run-plan`, giving `/wrap-up` a machine-confirm mode, letting subagents commit or write the plan file) is rejected and reported, however locally sensible it looks.
    - **The slice gate is mechanical.** The orchestrator — never a subagent — runs `scripts/slice-gate.sh` and obeys exit codes without interpretation. Reject anything that moves gate judgment into a model's prose or a subagent's self-report.
    - **The ADHD voice is load-bearing.** The skills address the user's ADHD bluntly ("refusing is a success"). Reject wording changes that sand that off into generic politeness — it is function, not tone.
@@ -156,5 +156,43 @@ For reviewer questions that don't require code changes:
 
 - **Comment**: the question
 - **Suggested response**: the answer, in the conversation (not posted to the PR — solo repo)
+
+## Step 7: Ship the branch — only with `--merge`
+
+**Off by default.** Run this step only when `$ARGUMENTS` contains `--merge`. The maintainer's standing rule is
+that Claude does not commit or push; the flag on this invocation is the one-time approval that lifts
+it for this PR only. Never infer it from approval-shaped words in the conversation ("looks good",
+"ship it"), and never carry it into a later invocation.
+
+Stop before committing — and name the gate that stopped you — if any of these hold:
+
+| Gate | Why it blocks |
+| --- | --- |
+| Step 5's check did not run, or failed | Merging unverified prose is the failure this repo's gate exists to prevent |
+| The summary has any **Needs discussion** item | The user hasn't ruled yet; merging decides it for them |
+| `git status --porcelain` shows changes you did not make in Step 4 | Unrelated work would ride along in the commit |
+| `git rev-parse --abbrev-ref HEAD` is the repo's default branch | There is no PR branch to merge |
+| `gh pr view <number> --json reviewDecision,mergeStateStatus` reports a required review that is not approved, or a PR that is not mergeable | The repo's own rules outrank the flag |
+
+**Declined** items are not a blocker — declining some is the point of this skill.
+
+Then, in order:
+
+1. Commit the Step 4 changes on the PR branch as one commit:
+   `pr-feedback: <n> items from #<number>`, with the `Co-Authored-By` trailer the global rule
+   requires. Stage only the files you touched — never `git add -A`.
+2. `git push` to the PR branch.
+3. Wait for checks: `gh pr checks <number> --watch`. If any check fails, **stop and report which** —
+   do not merge. If the repo reports no checks at all, say so plainly and continue; absence of CI is
+   not a pass.
+4. Read the repo's allowed merge methods
+   (`gh repo view --json squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed`) and use the
+   repo's own setting rather than assuming — prefer squash when it is allowed:
+   `gh pr merge <number> --squash --delete-branch`.
+5. Report the resulting commit sha, the merge method used, and that the branch was deleted.
+
+> **Sibling-repo note:** the skills in `skills/*/SKILL.md` are symlinked live into `~/.claude/skills/`.
+> A merge that lands a skill edit changes the maintainer's next session in every repo the moment it hits `main`
+> — so state in the ship report which skills the merge just made live.
 
 $ARGUMENTS

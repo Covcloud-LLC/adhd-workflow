@@ -10,13 +10,18 @@ fresh execution sessions, and `/wrap-up`. It is published for other people to in
 installed package is Codex-native, but live workflow prose should make execution handoffs portable
 between Codex/OpenAI and Claude Code when both routes are relevant.
 
-There is **no application code, no build, and no test suite.** Every artifact is markdown. The
-"product" is the prose inside `skills/*/SKILL.md`.
+The "product" is the prose inside `skills/*/SKILL.md`. The repo also carries one piece of real
+code: the **slice gate** (`scripts/slice-gate.sh`), the machine witness `/run-plan` uses to mark
+slices done, with its test suite in `tests/gate_test.sh`. There is still no build; the whole-tree
+check is `bash scripts/check.sh`.
 
 ```
 skills/<name>/SKILL.md   the 13 skills — this is the product
 install.sh               symlinks skills into ~/.codex
-docs/                    this repo's own ideas/notes/plans (see "Dogfooding")
+scripts/slice-gate.sh    the slice gate — see docs/notes/slice-gate-convention.md
+scripts/check.sh         the whole-tree check: shell syntax + the gate's tests
+tests/gate_test.sh       the gate's test suite (bash tests/gate_test.sh)
+docs/                    this repo's own notes (see "Dogfooding")
 ```
 
 ## The critical gotcha: edits here are live
@@ -65,19 +70,31 @@ Changing any of these means changing several skills at once:
 |---|---|---|---|
 | `reasoned:` frontmatter stamp on an idea | passed the reasoning gate | `/reason` | `/promote` |
 | trailing ` ✅` on a `### <id>` slice heading | that slice is done | `/wrap-up` | `/standup` |
-| `Model` + `Effort` header on a plan | default runtime route + provider-aware reasoning budget | `/promote` | `/standup`, `/audit-plans` |
-| `OpenAI` + `Claude` + `Recommended` route lines | provider-specific routes and the chosen default | `/promote` | `/standup`, `/pjm`, `/audit-plans` |
+| `> Default run tier:` header on a plan | both provider routes + effort, for slices with no override | `/promote` | `/standup`, `/pjm`, `/audit-plans`, `/run-plan` |
+| `> Run at:` line on a slice | the tier that slice runs at; always beats the plan default | `/promote` | `/standup`, `/run-plan` |
 | WIP cap of 2 `in-progress` plans | the finish-what-you-start rule | — | `/standup` (the only place a plan goes `in-progress`) |
 | `docs/plans/_done/` | completed plans are archived, never deleted | `/wrap-up` | `/audit-plans` |
+| the slice gate — `scripts/slice-gate.sh` | the five machine facts behind a machine-written ` ✅`; see `docs/notes/slice-gate-convention.md` | orchestrator only (never a subagent) | `/run-plan`, `/wrap-up` |
+| `## What this plan will actually do` + `## Decisions this plan makes` sections, read back before write | the plan's brief and the decisions the decomposition added | `/promote` | `/audit-plans` (flag + drift spot-check), `/run-plan` (launch echo) |
+
+The legacy four-line `Model:`/`OpenAI:`/`Claude:`/`Recommended:` header is **readable but
+deprecated** — `/promote` must never emit it, and `/audit-plans` flags it for migration.
 
 `docs/plans/` is **task-tracked work only.** Design, decision, and reference docs go in
 `docs/notes/`.
 
 ## Dogfooding
 
-This repo uses its own workflow on itself. `docs/ideas/`, `docs/notes/`, and `docs/plans/_done/`
-hold real artifacts, and they double as the worked example readers learn from — so they should
-stay well-formed.
+This repo uses its own workflow on itself, but its lifecycle docs are **not** in this repo. The
+maintainer's `~/.config/adhd-workflow/backlog-root` points at a backlog metarepo with a dir for
+this repo, so the skills resolve the docs root there: `ideas/`, `plans/` (with `_done/`), and
+`defects/` live in that metarepo. Only `docs/notes/` stays here, and it doubles as the worked
+example readers learn from — so it should stay well-formed.
+
+Consequence: if you are looking for a plan or idea for this repo and `docs/plans/` doesn't exist,
+that is expected, not a missing file. Resolve the docs root the way the skills do (read
+`~/.config/adhd-workflow/backlog-root`, then look for `<backlog-root>/adhd-workflow/`) instead of
+assuming a path.
 
 To change a skill, capture the idea with `/idea` and run `/reason` on it first, rather than
 editing the skill directly. The one exception is a typo or broken link.
@@ -86,18 +103,22 @@ When editing current live workflow behavior, make the surface explicit: Codex/Op
 Code route, and the recommended default between them. Don't mechanically replace every "Claude
 session" with "Codex session"; if a passage is describing the Claude Code path, say that.
 
-Note that the archived plans in `docs/plans/_done/` describe editing paths under `~/.Codex/…`.
-That is historical: the skills lived in a dotfiles repo before this one. Don't "fix" those paths —
-they're a record of what was done at the time.
+Some archived plans in that metarepo describe editing paths under `~/.codex/…` directly. That is
+historical: the skills lived in a dotfiles repo before this one. Don't "fix" those paths — they're
+a record of what was done at the time.
 
 ## Verifying a change
 
-The only executable thing here is `install.sh`. Test it against a throwaway config dir rather than
-the real `~/.codex`:
+The whole-tree check is `bash scripts/check.sh` — it syntax-checks the shell scripts and runs the
+gate's test suite (`bash tests/gate_test.sh`). Run it after touching anything under `scripts/` or
+`tests/`.
+
+For `install.sh`, test against a throwaway config dir rather than the real `~/.codex` (the
+installer reads `CODEX_HOME`):
 
 ```bash
-bash -n install.sh                                # syntax
-CODEX_HOME=$(mktemp -d) ./install.sh             # link into a sandbox
+bash -n install.sh                        # syntax
+CODEX_HOME=$(mktemp -d) ./install.sh      # link into a sandbox
 ```
 
 Exercise the paths that matter: a clean install, an idempotent re-run, a conflicting existing
