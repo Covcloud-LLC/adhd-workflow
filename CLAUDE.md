@@ -79,14 +79,16 @@ Changing any of these means changing several skills at once:
 
 ## Dogfooding
 
-This repo uses its own workflow on itself. `docs/ideas/`, `docs/notes/`, and `docs/plans/_done/`
-hold real artifacts, and they double as the worked example readers learn from — so they should
-stay well-formed.
+This repo uses its own workflow on itself, but its lifecycle docs are **not** in this repo. Because
+`~/projects/covcloud-backlog/adhd-workflow/` exists, the skills resolve this repo's docs root to the
+backlog metarepo: `ideas/`, `plans/` (with `_done/`), and `defects/` live there. Only `docs/notes/`
+stays here, and it doubles as the worked example readers learn from — so it should stay well-formed.
 
 To change a skill, capture the idea with `/idea` and run `/reason` on it first, rather than
 editing the skill directly. The one exception is a typo or broken link.
 
-Note that the archived plans in `docs/plans/_done/` describe editing paths under `~/.claude/…`.
+Note that the archived plans in `~/projects/covcloud-backlog/adhd-workflow/plans/_done/` describe
+editing paths under `~/.claude/…`.
 That is historical: the skills lived in a dotfiles repo before this one. Don't "fix" those paths —
 they're a record of what was done at the time.
 

@@ -233,14 +233,15 @@ you'd be happy to `git reset --hard`.
 
 - [`docs/adhd-workflow-guide.md`](docs/adhd-workflow-guide.md) — the plain-language walkthrough of
   all five stages. Start here.
-- [`docs/plans/_done/adhd-project-workflow-system.md`](docs/plans/_done/adhd-project-workflow-system.md)
-  — the design plan the system was built from.
+- The design plan the system was built from (`adhd-project-workflow-system.md`) is archived in the
+  author's private backlog repo, not here — the notes below carry the decisions that matter.
 - [`docs/notes/slice-gate-convention.md`](docs/notes/slice-gate-convention.md) — what a
   machine-written ` ✅` is allowed to mean, and why the gate is a script.
 - [`docs/notes/`](docs/notes/) — the decision notes behind specific choices.
 
-This repo uses its own workflow on itself, so those directories double as a worked example of what
-the output actually looks like.
+This repo uses its own workflow on itself, so `docs/notes/` doubles as a worked example of what the
+reasoning output actually looks like. Its ideas, plans, and defects live in a separate private
+backlog repo, so they aren't visible here.
 
 ## Contributing
 
