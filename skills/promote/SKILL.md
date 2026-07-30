@@ -46,7 +46,13 @@ must pass.
 3. Run the **rubric** below. If the idea lacks the substance to satisfy it, you have two moves:
    - If the missing pieces are things only the user knows (scope, acceptance criteria, which files), **refuse**: list each failed criterion and the specific question that would fix it. Stop. Do not write a plan.
    - If you can responsibly infer the missing structure from the repo and the idea, draft it — but show the user the inferences and let them correct before finalizing.
-4. On pass: write `docs/plans/<slug>.md` in house format with `status: todo` (promotion does NOT start work). Decompose into tasks, each with a self-contained `task:` string and a `Verify:` clause. If the plan's `Effort` is `high`+ (or it carries `> Red-gate: yes`), apply the **red-gate authoring rule** below to each correctness-sensitive task and set the whole-tree `> Check:` header. Set the provider-qualified **`Model` and provider-aware `Effort`** header fields plus the OpenAI / Claude route lines (see *Model & provider-aware Effort* below). Then **remove the idea file** from `docs/ideas/` (it has graduated) — or note it if the user wants it kept.
+4. On pass: draft the whole plan — but **read it back before anything is written to disk.**
+   - Decompose into tasks, each with a self-contained `task:` string and a `Verify:` clause. If the plan's `Effort` is `high`+ (or it carries `> Red-gate: yes`), apply the **red-gate authoring rule** below to each correctness-sensitive task and set the whole-tree `> Check:` header. Set the provider-qualified **`Model` and provider-aware `Effort`** header fields plus the OpenAI / Claude route lines (see *Model & provider-aware Effort* below).
+   - With the slices drafted and **no file created yet**, write the brief and the decision delta from them (see *The brief and the decision delta*), and present **ONE** message containing exactly three things: the **brief**, the **decision delta** (or the explicit "None — …" line), and the question **"Write it?"** Then stop and wait for the user's yes.
+   - **One message, one yes.** Do not follow it with a second rubric, a confirmation checklist, or a round of questions — the user has ADHD and a second gate is where a ready plan dies. If they correct something, fold the correction into the draft and re-ask in the same one-message shape.
+   - On yes: write `docs/plans/<slug>.md` in house format with `status: todo` (promotion does NOT start work), then **remove the idea file** from `docs/ideas/` (it has graduated) — or note it if the user wants it kept — and commit/push if the docs root is the metarepo. Exactly as before; the read-back changes when you write, not what you write.
+
+   Why read back *before* writing: under the metarepo every write is committed and pushed the moment it lands, so a plan written and then corrected costs a push-then-amend churn in shared history. Reading back first makes the first commit the right one. The habit is worth keeping in a plain `docs/` repo too — the brief is where a wrong decomposition shows itself.
 5. Report: the plan path, the task count, and that it's `todo` (not started). If the user is already at the WIP cap (2 plans `in-progress`), add one line: "You have 2 in flight — this waits as `todo` until one finishes. Good." Do not offer to start it; end with the one breadcrumb line: "`/standup` starts it when a WIP slot opens."
 
 ## The rubric — refuse unless ALL pass
@@ -59,6 +65,7 @@ must pass.
 | **Scoped** | Fits one plan (~≤8 tasks / one coherent deliverable). If it's multiple independently-valuable phases, it's a *program* — refuse and tell the user to split it into separate plans. |
 | **Why** | A one-line motivation survives, so future-you remembers the point. |
 | **Acceptance criteria (user-facing features)** | A plan for a user-facing feature must carry an explicit `## Acceptance criteria` checklist of observable behaviors — what a user can see/do when it ships. Backend/internal plans are exempt (their `Verify:` clauses suffice). |
+| **Brief + decision delta** | The plan artifact carries BOTH `## What this plan will actually do` (one to two present-tense sentences per slice, no file paths) and `## Decisions this plan makes` (every choice the decomposition added, or the exact line "None — the reasoning note settled everything"). No exemptions; an omitted section fails. |
 
 ## House format (match the repo, this is the shape)
 
@@ -83,6 +90,16 @@ disagree, **the slice line wins.**
 
 ## Definition of done
 <the observable end state>
+
+## What this plan will actually do
+<one to two present-tense sentences per slice, in plain language, no file paths — written for a
+human skimming this a week from now>
+
+## Decisions this plan makes
+- <a choice the decomposition introduced that the reasoning note / idea did not settle>
+- <...>
+<!-- if the decomposition introduced no new choices, this section still appears, containing
+     exactly one line: None — the reasoning note settled everything -->
 
 ## Acceptance criteria   <!-- required for user-facing features; omit for backend/internal plans -->
 - [ ] <observable behavior a user can see/do>
@@ -116,6 +133,37 @@ suite). `/run-plan` refuses to drive a plan without it — no whole-tree check m
 that a slice broke nothing. It is optional for plans that will only ever be hand-run.
 
 Use a short uppercase ID prefix derived from the slug. Statuses used across the system: `todo` · `in-progress` · `blocked` · `done`. Match whatever the repo's existing plans already use if they differ.
+
+### The brief and the decision delta (both required)
+
+`## What this plan will actually do` is the **brief** — one to two present-tense sentences per
+slice, plain language, no file paths, no slice IDs needed. It is for a human skimming, not for an
+execution session.
+
+Write it **after the slices are drafted, never before.** It is a mirror of the `task:` strings, so
+it can only be written once they exist. That is the point: if the brief and the `task:` strings
+disagree — the brief promises something no slice does, or a slice does something the brief never
+mentions — **that is a bug in the plan, not a wording problem.** Fix the decomposition, then
+re-mirror it.
+
+`## Decisions this plan makes` is the **decision delta**: every choice the decomposition
+introduced that the reasoning note or the idea did not already settle. Splitting one behavior
+across two slices, picking a format, choosing where something lives, deciding what is out of
+scope — each is a decision, and each is invisible if it only exists implicitly inside a `task:`
+string. If the decomposition genuinely introduced none, the section is **still present** and
+contains exactly:
+
+```
+None — the reasoning note settled everything
+```
+
+An **omitted** section is never acceptable — "no delta" and "nobody looked" have to be
+distinguishable a month from now. Silence reads as the second one.
+
+**Legacy migration rule:** plans written before these two sections existed carry neither. They are
+**readable legacy**, never malformed — do not warn about them, do not refuse to work with them. But
+never emit a new plan without both. `/audit-plans` flags them for migration, and you may offer to
+backfill.
 
 ### Run tiers: per slice, not per plan
 
