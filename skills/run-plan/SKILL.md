@@ -56,6 +56,19 @@ any failure **name the offending slice (or header) and refuse to start**:
 6. Create a scratch directory OUTSIDE the repo (`mktemp -d`) for subagent reports. Reports never
    land in the tree — the tree belongs to the slices.
 
+## 0b · Launch banner — informational only, not a gate
+
+If the plan carries a `## What this plan will actually do` section (the brief `/promote` writes
+— one to two present-tense sentences per slice), print it verbatim once, after step 0's
+validation passes and before spawning agent A for slice 1. That is all this step does.
+
+This is **not** a seventh validation check and it does not become one: do not pause, do not
+prompt for confirmation, do not ask the user to acknowledge it, and never treat its **absence**
+as a validation failure — a plan with no such section runs exactly as it does today, silently. A
+plan written before `/promote` started requiring this section (see its legacy-migration rule) is
+readable legacy, not malformed; step 0 already decided whether the plan is runnable, and this
+step cannot undo that.
+
 ## 1 · The per-slice loop — strictly serial, in plan order
 
 For each open slice, top to bottom, first pick its lane. **A slice whose task string names its
