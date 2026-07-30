@@ -126,11 +126,16 @@ later, mid-context-switch across three projects. They already read the plan befo
 they review the PR diff, so the report must not re-teach what was built or how. It exists for a
 30-second scan: what happened, what is blocked, what is next.
 
+This is the one report where status outranks action: Rule 1's action-first order yields here,
+and `Next` closes the report instead (satisfying Rule 3).
+
 Above the fold, in this order:
 
 1. **Status line** — done or partial, and whether anything was committed.
-2. **Plan vs actual** — report by exception. "All ACs shipped as planned" is one line; only
-   deviations get more. Include a one-line verification result ("build green, 315 tests").
+2. **Plan vs actual** — report by exception. "All acceptance criteria shipped as planned" is
+   one line; only deviations get more. Include a one-line verification result ("build green,
+   315 tests"). If no plan or PR exists for the reader to consult, add one line saying what
+   was delivered — exception-only reporting assumes the details are visible somewhere else.
 3. **Blockers / carry-forward** — only items that change future work. Max 3, one line each.
 4. **Filed** — knowledge captured elsewhere (memory, backlog item, defect, README, doc): one
    line per filing saying what and where. File it there; do not explain it here. The reader
