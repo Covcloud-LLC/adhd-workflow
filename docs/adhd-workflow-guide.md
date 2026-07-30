@@ -151,6 +151,14 @@ carry both routes — for example OpenAI `gpt-5.5 · high` and Claude Code
 surface you're actually using. Refusing is a normal, healthy outcome — a weak plan promoted is
 worse than an idea left alone.
 
+Before any of that gets written, `/promote` shows you the plan and asks once. You see two things:
+a **brief** (`## What this plan will actually do`) — one or two plain-language sentences per task,
+no file paths, so you can tell at a glance what you're actually signing up for — and a **decision
+delta** (`## Decisions this plan makes`) — every choice the decomposition itself made that the
+reasoning note hadn't already settled, like how the work got split or what got left out. One
+message, one yes. Say yes and the plan is written with both sections in it; correct something and
+`/promote` folds the fix in and asks again the same way, before anything lands on disk.
+
 ### The red-gate: high-effort plans start with a failing test
 
 When a plan's `Effort` is `high` or above, `/promote` writes its correctness-sensitive task

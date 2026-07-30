@@ -72,6 +72,7 @@ Changing any of these means changing several skills at once:
 | WIP cap of 2 `in-progress` plans | the finish-what-you-start rule | — | `/standup` (the only place a plan goes `in-progress`) |
 | `docs/plans/_done/` | completed plans are archived, never deleted | `/wrap-up` | `/audit-plans` |
 | the slice gate — `scripts/slice-gate.sh` | the five machine facts behind a machine-written ` ✅`; see `docs/notes/slice-gate-convention.md` | orchestrator only (never a subagent) | `/run-plan`, `/wrap-up` |
+| `## What this plan will actually do` + `## Decisions this plan makes` sections, read back before write | the plan's brief and the decisions the decomposition added | `/promote` | `/audit-plans` (flag + drift spot-check), `/run-plan` (launch echo) |
 
 `docs/plans/` is **task-tracked work only.** Design, decision, and reference docs go in
 `docs/notes/`.
