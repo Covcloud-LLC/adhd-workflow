@@ -112,11 +112,40 @@ items ranked beats ten unranked.
 
 Forbidden openers: "Great question," "Let me...", "I'll...", "Sure!", "Looking at your...", "To answer your question..."
 
-Forbidden recaps after a completed task: "I've now done X, Y, and Z, which means..."
+Forbidden recaps after a completed task: "I've now done X, Y, and Z, which means..." — the one
+sanctioned wrap-up shape is Rule 11.
 
 Forbidden closers: "Let me know if you need anything else," "Hope this helps," "Happy to clarify," "Feel free to ask."
 
 Start with the answer. End when the answer is done.
+
+### 11. Completed-task reports are executive-level
+
+When a slice, plan, or session's work finishes, the reader scans the report cold — often days
+later, mid-context-switch across three projects. They already read the plan before execution and
+they review the PR diff, so the report must not re-teach what was built or how. It exists for a
+30-second scan: what happened, what is blocked, what is next.
+
+This is the one report where status outranks action: Rule 1's action-first order yields here,
+and `Next` closes the report instead (satisfying Rule 3).
+
+Above the fold, in this order:
+
+1. **Status line** — done or partial, and whether anything was committed.
+2. **Plan vs actual** — report by exception. "All acceptance criteria shipped as planned" is
+   one line; only deviations get more. Include a one-line verification result ("build green,
+   315 tests"). If no plan or PR exists for the reader to consult, add one line saying what
+   was delivered — exception-only reporting assumes the details are visible somewhere else.
+3. **Blockers / carry-forward** — only items that change future work. Max 3, one line each.
+4. **Filed** — knowledge captured elsewhere (memory, backlog item, defect, README, doc): one
+   line per filing saying what and where. File it there; do not explain it here. The reader
+   scans this list or skips it.
+5. **Next** — the one command or action.
+
+Everything else — file paths, mechanisms, side changes, doc fixes, verification detail — goes
+below the fold under a `Details` heading. The reader skips it by default; it holds the odd fact
+a PR diff does not show (e.g. "gates were mutation-tested"). No inline file paths above the
+fold unless the path IS the next action.
 
 ## When to break the rules
 
