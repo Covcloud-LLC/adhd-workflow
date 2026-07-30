@@ -60,7 +60,9 @@ any failure **name the offending slice (or header) and refuse to start**:
 
 If the plan carries a `## What this plan will actually do` section (the brief `/promote` writes
 — one to two present-tense sentences per slice), print it verbatim once, after step 0's
-validation passes and before spawning agent A for slice 1. That is all this step does.
+validation passes and before spawning the first agent of the first **open** slice. That is all
+this step does. (First *open* slice, not slice 1: on a resume the earlier slices already carry
+` ✅`. And "first agent", not "agent A": an exempt slice's single-agent lane has no agent A.)
 
 This is **not** a seventh validation check and it does not become one: do not pause, do not
 prompt for confirmation, do not ask the user to acknowledge it, and never treat its **absence**

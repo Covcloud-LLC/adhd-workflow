@@ -144,15 +144,16 @@ Promote asks *"is the plan itself solid enough to hand off?"* An idea can pass o
 other.
 
 If it passes, `/promote` writes `docs/plans/<slug>.md` as `todo` (it does **not** start the work)
-and sets the route, `Model`, and `Effort` the plan should run at. `Model` is the runtime
-recommendation. `Effort` is the provider-aware reasoning budget. Model-sensitive handoffs should
-carry both routes — for example OpenAI `gpt-5.5 · high` and Claude Code
-`claude-opus-4-8 · high` — plus a `Recommended` line that chooses the default between them for the
-surface you're actually using. Refusing is a normal, healthy outcome — a weak plan promoted is
-worse than an idea left alone.
+and sets the model and reasoning effort the plan should run at. Both provider routes go on one
+`Default run tier:` header — for example Claude Code `claude-opus-4-8 · high` alongside Codex
+`gpt-5.5 · high` — and then **every slice carries its own `Run at:` line**, because a plan whose
+slices all run at the same tier hasn't been thought about: the slice that decides a contract
+shape earns the top tier, the doc slice doesn't. The slice line always wins over the plan
+default. Refusing is a normal, healthy outcome — a weak plan promoted is worse than an idea left
+alone.
 
 Before any of that gets written, `/promote` shows you the plan and asks once. You see two things:
-a **brief** (`## What this plan will actually do`) — one or two plain-language sentences per task,
+a **brief** (`## What this plan will actually do`) — one or two plain-language sentences per slice,
 no file paths, so you can tell at a glance what you're actually signing up for — and a **decision
 delta** (`## Decisions this plan makes`) — every choice the decomposition itself made that the
 reasoning note hadn't already settled, like how the work got split or what got left out. One
