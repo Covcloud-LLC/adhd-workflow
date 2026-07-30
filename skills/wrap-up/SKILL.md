@@ -15,7 +15,7 @@ just-finished work and its learnings are fresh. `/run-plan` also invokes this sk
 a run ends (clean or halted) — machine invocation changes **nothing** below: every
 confirm-before-writing rule holds, and there is no machine-confirm mode (the slice-gate
 convention says why there never will be). The "what's next" decision is NOT wrap-up's job
-in the current model — the long-running `/pjm` session owns it (see step 4).
+in the current model — the long-running `/pjm` session owns it (see step 5).
 
 **Cardinal rule: never flip a status silently.** Recommend the change, then act on the user's
 confirmation. Only persist things actually discussed or demonstrated — never fabricate.
@@ -117,7 +117,46 @@ here. If no surface qualifies, skip this step silently.
 **Gate rule:** a contract-change spec task **blocks plan completion** — the plan cannot move to
 `_done/` (step 1's completion flip) while it's open. All other doc tasks are nudges.
 
-### 4. Next action — hand off to the driver
+### 4. Retire a spent reasoning note (confirm before deleting)
+
+A reasoning note is **interim state**, not repo content. It exists to carry a decision from idea to
+plan, and its life ends when the thing it fed exists: an ADR, shipped code, a spec, a guide, or a
+paragraph in `CLAUDE.md`. At that point the note is a second, staler copy of a decision that now
+lives somewhere better — the exact drift that makes a future session trust the wrong artifact.
+
+**Run this step only when step 1 flipped the whole plan to done.** A note feeds a plan, not a
+slice; it stays live while any slice of that plan is open.
+
+1. **Find the note.** Read the plan's design-authority line (plans name it as
+   `Design authority: <path>`), or match `docs/notes/<plan-slug>-reasoning.md`. If the plan names
+   none, skip this step silently.
+2. **Decide whether it is spent** — name the artifact that absorbed it. "The code merged" is not
+   enough on its own; say *where the reasoning now lives*: ADR NNNN, a `docs/reference/` spec, a
+   shipped guide, a `CLAUDE.md` paragraph, or a comment at a named path. If you cannot name one,
+   it is not spent — leave it and say why.
+3. **Check the four blockers.** Any one of them means do not delete:
+   - **Step 3 queued it as a doc source.** A note queued for a `/draft-guide` explanation is still
+     the input to unwritten work. It retires when that doc ships, not now.
+   - **Something still cites it.** Grep the repo for the note's filename (ADRs, `CLAUDE.md`,
+     `README`, other notes). A live citation means deleting it strands a reference. Either update
+     the citing artifact in the same breath, or keep the note. When you grep, match the **full
+     path as written**, not a trailing fragment — a bare `docs/notes/<file>` pattern also matches
+     `other-repo/docs/notes/<file>`, and a cross-repo citation is not a local one.
+   - **It holds parked or out-of-scope content** nothing is going to consume. That is not an
+     interim note, it is a specification wearing a note's filename. Do not delete it and do not
+     leave it mis-filed — flag it for rehoming (an ADR appendix, or `docs/reference/` marked out
+     of scope) and move on.
+   - **Its plan is not actually complete.** Re-read the slice headings; a missing ` ✅` beats your
+     recollection.
+4. **Confirm, then delete.** State the note, the artifact that absorbed it, and that git history
+   retains it — cite the SHA it was last modified in, so a future session can retrieve it. Delete
+   only on an explicit yes. **Do not commit** — reasoning notes live in the code repo, where the
+   no-auto-commit rule applies; the user commits the deletion themselves.
+
+Delete rather than archive. Unlike a plan going to `_done/`, a spent note's content is not lost —
+it moved into the artifact you named in step 2, and git holds the original.
+
+### 5. Next action — hand off to the driver
 
 The **`/pjm`** session is the single driver of "what's next" (next-action pick, provider route,
 model/effort rec, branch setup — it wraps `/standup` for the analysis). **Do NOT run `/standup`
@@ -138,10 +177,10 @@ skill here instead — it owns the `▶ NEXT` line (paste-ready `task:` string +
 alternate route when present, model, and effort), the WIP=2 check, and stalled/drift flags. Don't
 duplicate its logic; just run it.
 
-### 5. Weekly-hygiene nudge (conditional — do NOT auto-run)
+### 6. Weekly-hygiene nudge (conditional — do NOT auto-run)
 
 `/audit-plans` is the heavy weekly pass; never run it automatically. Suggest it in **one line**
-only if a hygiene smell surfaced during steps 1 or 4: a plan missing `Model`/`Effort`/`Status`,
+only if a hygiene smell surfaced during steps 1, 4, or 5: a plan missing `Model`/`Effort`/`Status`,
 an `in-progress` plan flagged stalled, malformed/orphaned/duplicate plans, or standup itself
 recommended it.
 
@@ -152,6 +191,9 @@ recommended it.
   persisting, say so — that's fine.
 - Doc tasks queued (audience · mode · source paths), noting whether any is a completion-blocking
   spec task. If none qualified, omit this line.
+- The reasoning note's disposition, when a completed plan named one: deleted (naming the artifact
+  that absorbed it), kept (naming which blocker held it), or flagged for rehoming. Omit the line
+  when the plan named no note or no plan completed.
 - The next-action hand-off: point the user to their `/pjm` session; if the slice came from
   `/pjm run-plan <plan>`, explicitly tell them to return to that same session and continue the
   same plan-run loop for `<plan>` (or, in the fallback case, the `▶ NEXT` line from standup,
