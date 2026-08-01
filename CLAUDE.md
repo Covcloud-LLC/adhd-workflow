@@ -57,7 +57,8 @@ Skills read and write the **current repo's** `docs/` directory by default — ne
 absolute path. The one sanctioned indirection is the optional **backlog metarepo**: when
 `~/.config/adhd-workflow/backlog-root` names a metarepo and it has a dir for the current repo,
 the lifecycle skills resolve their docs root there instead (see any skill's "Docs root"
-section; reasoning notes always stay in the code repo). Beyond that, the only global thing is
+section; lifecycle reasoning notes follow the docs root, but durable design/decision/reference
+docs in `docs/notes/` stay in the code repo). Beyond that, the only global thing is
 the skill file itself.
 
 ## Shared conventions the skills depend on

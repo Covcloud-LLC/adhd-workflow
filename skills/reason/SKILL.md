@@ -66,7 +66,10 @@ When both are uncertain, run design first (it can change what you build), then a
      chain straight into it (this is the frictionless path — don't make them re-invoke).
    - **reasoned** → Do the pass now: name the decision, lay out 2–3 options with how each fails,
      recommend one with the why. Write it to `docs/notes/<slug>-reasoning.md` (see shape below).
-     Stamp `reasoned: notes/<slug>-reasoning.md`. Tell the user it's ready to `/promote`.
+     When the docs root is the metarepo, the note is created there and immediately committed and
+     pushed scoped to that path, per the metarepo write rule in the Docs root block — this skill
+     never commits to the code repo. Stamp `reasoned: notes/<slug>-reasoning.md`. Tell the user
+     it's ready to `/promote`.
    - **workshop-required** → Do NOT write a note or a plan. Pick the flavor(s). Invoke the
      `design-workshop` skill, passing the problem **and the flavor**, so it builds and pbcopies
      the adversarial kickoff for a separate provider-qualified workshop session. Stamp
@@ -75,7 +78,9 @@ When both are uncertain, run design first (it can change what you build), then a
 4. **After a workshop** (user returns with the synthesis): they re-run `/reason` on the same
    idea. Read their synthesis, write/finalize `docs/notes/<slug>-reasoning.md` capturing the
    decision the workshop reached, and flip the stamp to `reasoned: notes/<slug>-reasoning.md`.
-   Now it's ready to `/promote`.
+   When the docs root is the metarepo, the note is created there and immediately committed and
+   pushed scoped to that path, per the metarepo write rule in the Docs root block — this skill
+   never commits to the code repo. Now it's ready to `/promote`.
 
 ## The reasoning note (`docs/notes/<slug>-reasoning.md`)
 
@@ -115,3 +120,5 @@ Short. It records the decision so `/promote` and future-you don't re-litigate it
 - **`clear` must stay frictionless.** No note, no ceremony — one line and an offer to chain into
   `/promote`. If the gate makes trivial ideas expensive, it will get skipped, and then it protects
   nothing.
+- **Leave the code repo's working tree clean.** `/reason` must not leave a note uncommitted in
+  the code repo — that's exactly what `/run-plan` step 0 refuses on.
