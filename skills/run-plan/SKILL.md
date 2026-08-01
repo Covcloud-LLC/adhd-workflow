@@ -169,6 +169,11 @@ task asked; the whole-tree green only proves it broke nothing.
   you matched at start has changed or moved, **abort the run** and tell the user what completed.
   Do not reconcile a concurrent hand-edit — "the file moved under me, here's what finished, you
   drive" is always correct.
+- **You recommend the quality pass; you never run it.** Do not invoke `/simplify`,
+  `/code-review`, or any equivalent agent yourself. A simplifier mutates the tree *after* the
+  gate stamped it, which retroactively unmoors every ` ✅` from the sha it names; and acting on a
+  review's findings is a model verdict you act on — the exact input this section already forbids.
+  You name the pass in the report and stop there.
 - **Model tier**: spawn every agent — A, B, or an exempt slice's single agent — at the slice's `Run at:` tier, falling back to the plan's
   `Default run tier:` header when the slice carries no `Run at:` line. The slice line always wins —
   over the plan default and over the plan's at-a-glance table. Legacy plans may carry the older
@@ -226,6 +231,26 @@ the answer is an edit to that slice's task string, then re-invoke `/run-plan`) �
 check status, scratch-dir path, and the reminder that nothing was pushed. If every slice is now ` ✅`, recommend the plan's
 completion flip but do not perform it — that is `/wrap-up`'s call with the user present.
 
+Then, as the last reported item, the **quality-pass recommendation**: run
+`/simplify <first-slice-sha>^..HEAD` first, then re-run the plan's `> Check:` command, then
+`/code-review` — in that order, because simplify rewrites and review reads, so reviewing first
+means reviewing code that is about to change. **Name the range; never recommend `/simplify`
+bare.** `<first-slice-sha>` is the first build commit *this run* landed — the report already
+lists it. A bare `/simplify` defines no diff, and this run just committed every slice, so it
+would review a clean working tree and report the code is already clean. `/code-review` needs no
+range: it already defaults to the committed branch diff. Say
+plainly that if the user accepts simplify's edits, each slice's ` ✅ (<command>, <sha_A>)`
+provenance becomes historical: the command named in the stamp went green against a tree that no
+longer exists — which is why the whole-tree check is re-run between the two.
+
+Emit it **only** on a clean completion where at least one slice completed during this run. Not on
+a red-gate halt, not on a question halt (nothing is finished; the next action is the fix, not a
+polish pass), and not on a resume that found every slice already ` ✅` — nothing changed, so
+there is nothing to review. `/simplify` and `/code-review` are Claude Code commands; if this
+session doesn't have them, say nothing rather than emit an instruction the user can't follow.
+Nothing goes into the plan file either way — the run cannot know whether the user will accept
+simplify's edits.
+
 ## 6 · End of run — invoke `/wrap-up` yourself
 
 When the run ends — clean completion **or** halt, either kind — deliver the report above, then
@@ -237,3 +262,7 @@ itself: it keeps every confirm-before-writing rule — it still asks before flip
 or archiving to `_done/`, and it must never gain a machine-confirms mode (the slice-gate
 convention says why). That is the point of calling it: the run ends by handing the human the
 reconciliation seat with the report already on screen, instead of leaving a chore behind.
+
+The quality-pass recommendation belongs to §5's report and is delivered **before** `/wrap-up` is
+invoked; `/wrap-up` does not own it, is not changed by it, and keeps sole ownership of the
+closing next-action hand-off.
