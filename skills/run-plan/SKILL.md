@@ -231,9 +231,14 @@ the answer is an edit to that slice's task string, then re-invoke `/run-plan`) �
 check status, scratch-dir path, and the reminder that nothing was pushed. If every slice is now ` ✅`, recommend the plan's
 completion flip but do not perform it — that is `/wrap-up`'s call with the user present.
 
-Then, as the last reported item, the **quality-pass recommendation**: run `/simplify` first, then
-re-run the plan's `> Check:` command, then `/code-review` — in that order, because simplify
-rewrites and review reads, so reviewing first means reviewing code that is about to change. Say
+Then, as the last reported item, the **quality-pass recommendation**: run
+`/simplify <first-slice-sha>^..HEAD` first, then re-run the plan's `> Check:` command, then
+`/code-review` — in that order, because simplify rewrites and review reads, so reviewing first
+means reviewing code that is about to change. **Name the range; never recommend `/simplify`
+bare.** `<first-slice-sha>` is the first build commit *this run* landed — the report already
+lists it. A bare `/simplify` defines no diff, and this run just committed every slice, so it
+would review a clean working tree and report the code is already clean. `/code-review` needs no
+range: it already defaults to the committed branch diff. Say
 plainly that if the user accepts simplify's edits, each slice's ` ✅ (<command>, <sha_A>)`
 provenance becomes historical: the command named in the stamp went green against a tree that no
 longer exists — which is why the whole-tree check is re-run between the two.
