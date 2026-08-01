@@ -88,8 +88,10 @@ one without needing a back-and-forth with you.
 
 `/reason` does the thinking now: names the decision, lays out the options and how each one fails,
 picks one and says why. It writes that to a short note, `notes/<slug>-reasoning.md`, in whichever
-place holds your other lifecycle docs — not necessarily next to the code — and stamps the idea
-`reasoned: notes/<slug>-reasoning.md`. Now the plan can be built on a decision instead of a shrug.
+place holds your other lifecycle docs — `./docs/notes/` in the repo itself by default, or
+`<backlog-root>/<repo>/notes/` if you've pointed the workflow at a backlog metarepo — and stamps
+the idea `reasoned: notes/<slug>-reasoning.md`. Now the plan can be built on a decision instead of
+a shrug.
 
 **3. Workshop-required** — wide open, hard to undo, or expensive to get wrong. This is where being
 *confidently wrong* costs you the most, so it earns a real stress-test before you commit.

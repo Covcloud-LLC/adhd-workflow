@@ -120,5 +120,8 @@ Short. It records the decision so `/promote` and future-you don't re-litigate it
 - **`clear` must stay frictionless.** No note, no ceremony — one line and an offer to chain into
   `/promote`. If the gate makes trivial ideas expensive, it will get skipped, and then it protects
   nothing.
-- **Leave the code repo's working tree clean.** `/reason` must not leave a note uncommitted in
-  the code repo — that's exactly what `/run-plan` step 0 refuses on.
+- **When the docs root is the metarepo, leave the code repo's working tree clean.** Both the note
+  and the stamped idea land in the metarepo and are committed there, so `/reason` touches the code
+  repo not at all — a note left uncommitted there is exactly what `/run-plan` step 0 refuses on. In
+  the no-metarepo fallback the note and the stamped idea are ordinary uncommitted changes under
+  `./docs/`, the same as before this rule existed; committing them stays the user's call.
