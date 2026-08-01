@@ -26,7 +26,7 @@ either way, it reads and writes the current repo's `docs/`.
 | Stage | Trigger | What it does | Where the output goes |
 |---|---|---|---|
 | **Ideate** | `/idea` | Dump a raw thought to disk and get out of the way. | `docs/ideas/` |
-| **Reason** | `/reason` | Decide if the idea is sound and how much thinking it needs. | a stamp on the idea (+ maybe a note in `docs/notes/`) |
+| **Reason** | `/reason` | Decide if the idea is sound and how much thinking it needs. | a stamp on the idea (+ maybe a reasoning note, wherever your other lifecycle docs live) |
 | **Plan** | `/promote` | Turn a reasoned idea into a well-formed, runnable plan. | `docs/plans/` |
 | **Execute** | *(fresh session)* | Run the plan's task strings and build the thing. | code |
 | **Validate** | `/wrap-up` / `$wrap-up` | Confirm it's done, capture what you learned, hand back to the driver. | plan status + memory |
@@ -87,9 +87,11 @@ one without needing a back-and-forth with you.
 > invalidated? Real questions, but answerable in one pass.
 
 `/reason` does the thinking now: names the decision, lays out the options and how each one fails,
-picks one and says why. It writes that to a short note in `docs/notes/<slug>-reasoning.md` and
-stamps the idea `reasoned: notes/<slug>-reasoning.md`. Now the plan can be built on a decision
-instead of a shrug.
+picks one and says why. It writes that to a short note, `notes/<slug>-reasoning.md`, in whichever
+place holds your other lifecycle docs — `./docs/notes/` in the repo itself by default, or
+`<backlog-root>/<repo>/notes/` if you've pointed the workflow at a backlog metarepo — and stamps
+the idea `reasoned: notes/<slug>-reasoning.md`. Now the plan can be built on a decision instead of
+a shrug.
 
 **3. Workshop-required** — wide open, hard to undo, or expensive to get wrong. This is where being
 *confidently wrong* costs you the most, so it earns a real stress-test before you commit.

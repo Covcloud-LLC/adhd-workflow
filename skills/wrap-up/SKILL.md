@@ -28,9 +28,9 @@ Before reading or writing any lifecycle doc, resolve the **docs root**:
 - If the config file `~/.config/adhd-workflow/backlog-root` exists, read it: it holds one line, the absolute path of a **backlog metarepo** (a git repo that centralizes backlog docs for many code repos) — call it `<backlog-root>`. If `<backlog-root>/<repo>/` exists, **that dir is the docs root** — `ideas/`, `plans/` (with `_done/`), `defects/`, and `BOARD.md` live directly under it (there is **no `docs/` path segment** inside the metarepo).
 - Otherwise fall back to `./docs/` in the current repo, exactly as before.
 
-Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD.md` mean paths under the resolved docs root. **Reasoning notes are the exception: `docs/notes/` ALWAYS stays in the current code repo's own `./docs/notes/`, never the metarepo.** Paths written *inside* a plan/idea/defect are relative to the code repo, not the metarepo.
+Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD.md` mean paths under the resolved docs root. **Reasoning notes follow the docs root too**: `docs/notes/` means `<backlog-root>/<repo>/notes/` when a metarepo is configured, and `./docs/notes/` in the code repo otherwise. Only lifecycle reasoning notes (`*-reasoning.md`, written by `/reason`) live there — durable design, decision, and reference docs stay in the code repo's own `./docs/notes/` and never move. Paths written *inside* a plan/idea/defect are relative to the code repo, not the metarepo.
 
-**Writing under the metarepo:** when the docs root is the metarepo, every file you create, edit, move (`git mv`), or delete there is **immediately committed and pushed**, scoped to the affected path(s): `git -C <backlog-root> add <path> && git -C <backlog-root> commit -m "<msg>" && git -C <backlog-root> push`. This is a deliberate exception to the no-auto-commit rule and applies ONLY to writes under the metarepo. Reads and writes in the code repo (reasoning notes, `scripts/slice-gate.sh`, git-based stall detection) are unchanged and are **NOT** auto-committed.
+**Writing under the metarepo:** when the docs root is the metarepo, every file you create, edit, move (`git mv`), or delete there is **immediately committed and pushed**, scoped to the affected path(s): `git -C <backlog-root> add <path> && git -C <backlog-root> commit -m "<msg>" && git -C <backlog-root> push`. This is a deliberate exception to the no-auto-commit rule and applies ONLY to writes under the metarepo. Reads and writes in the code repo (`scripts/slice-gate.sh`, git-based stall detection, durable `docs/notes/` reference docs) are unchanged and are **NOT** auto-committed.
 
 
 ## Sequence
@@ -43,7 +43,8 @@ Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD
   slice's `### <id> — …` heading in `docs/plans/<plan>.md`. This trailing ` ✅` is the
   **canonical slice-done marker** that `/standup` reads to pick the next action — without it,
   standup will re-offer the slice you just finished.
-- **The slice gate** (the convention in the workflow repo's `docs/notes/slice-gate-convention.md`)
+- **The slice gate** (the convention in the workflow repo's own `./docs/notes/slice-gate-convention.md`
+  — a durable note, which stays in the code repo whether or not a metarepo is configured)
   is the other legitimate writer of this marker: `/run-plan`'s orchestrator stamps a slice
   ` ✅ (<command>, <sha>)` only after the gate's five machine facts pass, or
   ` ✅ (<command>, single-agent)` for a red-gate-exempt slice witnessed by the whole-tree check
@@ -57,7 +58,9 @@ Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD
   slices explicitly delegated/moved/dropped (e.g. "→ see Plan 08") — recommend flipping
   `Status: → done` **and** `git mv docs/plans/<plan>.md docs/plans/_done/`. Confirm each before
   doing it.
-- Never invent a slice that isn't in the plan. `docs/notes/` is out of scope (not task-tracked).
+- Never invent a slice that isn't in the plan. Notes are out of scope here (not task-tracked) —
+  both the code repo's durable `./docs/notes/` reference docs and the lifecycle reasoning notes
+  under the docs root. A spent reasoning note is step 4's business, not this step's.
 - **Worktree handling** (add-on when the slice ran in a git worktree, not the main checkout).
   Detect the worktree context: `git rev-parse --git-common-dir` differs from `.git`, or the cwd
   matches the `<repo>-wt-<plan-id>` sibling-dir convention from `/pjm`'s branch mechanics. If
@@ -127,9 +130,15 @@ lives somewhere better — the exact drift that makes a future session trust the
 **Run this step only when step 1 flipped the whole plan to done.** A note feeds a plan, not a
 slice; it stays live while any slice of that plan is open.
 
-1. **Find the note.** Read the plan's design-authority line (plans name it as
-   `Design authority: <path>`), or match `docs/notes/<plan-slug>-reasoning.md`. If the plan names
-   none, skip this step silently.
+1. **Find the note.** Look for `docs/notes/<plan-slug>-reasoning.md` **under the resolved docs
+   root** — i.e. `<backlog-root>/<repo>/notes/<plan-slug>-reasoning.md` when a metarepo is
+   configured, `./docs/notes/<plan-slug>-reasoning.md` in the code repo otherwise. Also read the
+   plan's design-authority line (plans name it as `Design authority: <path>`); that path is
+   written code-repo-relative, and older plans were written when notes lived in the code repo, so
+   resolve its basename under the docs root **first** and fall back to the literal path in the
+   code repo if nothing is there. If the plan names none and no matching note exists, skip this
+   step silently. Whichever repo the note turns out to live in is the repo you delete it from in
+   sub-step 4 — record it.
 2. **Decide whether it is spent** — name the artifact that absorbed it. "The code merged" is not
    enough on its own; say *where the reasoning now lives*: ADR NNNN, a `docs/reference/` spec, a
    shipped guide, a `CLAUDE.md` paragraph, or a comment at a named path. If you cannot name one,
@@ -137,24 +146,67 @@ slice; it stays live while any slice of that plan is open.
 3. **Check the four blockers.** Any one of them means do not delete:
    - **Step 3 queued it as a doc source.** A note queued for a `/draft-guide` explanation is still
      the input to unwritten work. It retires when that doc ships, not now.
-   - **Something still cites it.** Grep the repo for the note's filename (ADRs, `CLAUDE.md`,
-     `README`, other notes). A live citation means deleting it strands a reference. Either update
-     the citing artifact in the same breath, or keep the note. When you grep, match the **full
-     path as written**, not a trailing fragment — a bare `docs/notes/<file>` pattern also matches
-     `other-repo/docs/notes/<file>`, and a cross-repo citation is not a local one.
+   - **Something still cites it.** Grep for the note in **both repos** — the code repo (ADRs,
+     `CLAUDE.md`, `README`, durable notes) *and* the backlog metarepo (plans, ideas, defects,
+     `BOARD.md`), when one is configured. A live citation in either repo means deleting the note
+     strands a reference. Either update the citing artifact in the same breath (see sub-step 4 —
+     the fix lands differently depending on which repo holds it), or keep the note.
+
+     The note now has **two spellings**: `docs/notes/<file>` (the code-repo spelling, which plans
+     also use because paths written inside a plan are code-repo-relative) and `notes/<file>` (the
+     metarepo spelling). Search **both spellings in both roots** — a plan in the metarepo may
+     carry the code-repo spelling, and a durable code-repo note may cite the metarepo one:
+
+     ```
+     grep -rn --fixed-strings "docs/notes/<file>" <code-repo-root>
+     grep -rn --fixed-strings "notes/<file>"      <code-repo-root>
+     grep -rn --fixed-strings "docs/notes/<file>" <backlog-root>/<repo>/
+     grep -rn --fixed-strings "notes/<file>"      <backlog-root>/<repo>/
+     ```
+
+     **Precision rule (unchanged, now with a second way to trip it):** match the **full path as
+     written**, never a trailing fragment. A bare `docs/notes/<file>` pattern also matches
+     `other-repo/docs/notes/<file>`, and a cross-repo citation from an unrelated repo is not a
+     local one. The `notes/<file>` spelling is *itself* a trailing fragment of `docs/notes/<file>`
+     and of `<backlog-root>/other-repo/notes/<file>`, so read every hit and keep only the ones
+     whose full path resolves to **this** note in one of these two repos. Discard the rest — do
+     not let a foreign repo's citation block the delete, and do not double-count one citation
+     because both spellings matched the same line.
    - **It holds parked or out-of-scope content** nothing is going to consume. That is not an
      interim note, it is a specification wearing a note's filename. Do not delete it and do not
-     leave it mis-filed — flag it for rehoming (an ADR appendix, or `docs/reference/` marked out
-     of scope) and move on.
-   - **Its plan is not actually complete.** Re-read the slice headings; a missing ` ✅` beats your
-     recollection.
+     leave it mis-filed — flag it for rehoming into the **code repo** (an ADR appendix, or
+     `docs/reference/` marked out of scope) and move on. When the note sits in the metarepo, that
+     rehoming is a cross-repo move, not a rename — flag it, don't perform it here.
+   - **Its plan is not actually complete.** Re-read the slice headings in the plan (under the
+     docs root); a missing ` ✅` beats your recollection.
 4. **Confirm, then delete.** State the note, the artifact that absorbed it, and that git history
-   retains it — cite the SHA it was last modified in, so a future session can retrieve it. Delete
-   only on an explicit yes. **Do not commit** — reasoning notes live in the code repo, where the
-   no-auto-commit rule applies; the user commits the deletion themselves.
+   retains it — cite the SHA it was last modified in (`git -C <root> log -1 --format=%H -- <path>`,
+   where `<root>` is whichever repo holds the note), so a future session can retrieve it. Delete
+   only on an explicit yes. **How you delete depends on which repo holds the note** (sub-step 1
+   recorded it):
+   - **Note in the backlog metarepo.** This is a metarepo write, so it is **committed and pushed
+     immediately**, scoped to that path, exactly like every other metarepo write:
+     `git -C <backlog-root> rm <repo>/notes/<file> && git -C <backlog-root> commit -m "<msg>" && git -C <backlog-root> push`.
+   - **Note in the code repo** (no metarepo configured, or the note never moved). Delete the file
+     and **do not commit** — the no-auto-commit rule holds in the code repo; the user commits the
+     deletion themselves.
+
+   **Fixing inbound citations now spans two repos**, and the two halves commit differently:
+   - A citing artifact **in the metarepo** is fixed in the **same metarepo commit** as the delete
+     — `git -C <backlog-root> add <citing path>` alongside the `git rm`, then one commit and push
+     scoped to both paths.
+   - A citing artifact **in the code repo** is a **separate code-repo edit that is NOT
+     auto-committed**. Make the edit, then leave it in the working tree and tell the user plainly
+     that it is uncommitted and waiting on them. Never fold a code-repo edit into the metarepo
+     commit.
+
+   Because the metarepo half self-commits and the code-repo half does not, a delete can ship
+   while a code-repo citation still points at the deleted file. Make the code-repo edit before
+   you run the metarepo delete, and say in the report which files are left uncommitted.
 
 Delete rather than archive. Unlike a plan going to `_done/`, a spent note's content is not lost —
-it moved into the artifact you named in step 2, and git holds the original.
+it moved into the artifact you named in step 2, and git holds the original (in whichever repo the
+note lived in).
 
 ### 5. Next action — hand off to the driver
 
@@ -192,8 +244,10 @@ recommended it.
 - Doc tasks queued (audience · mode · source paths), noting whether any is a completion-blocking
   spec task. If none qualified, omit this line.
 - The reasoning note's disposition, when a completed plan named one: deleted (naming the artifact
-  that absorbed it), kept (naming which blocker held it), or flagged for rehoming. Omit the line
-  when the plan named no note or no plan completed.
+  that absorbed it), kept (naming which blocker held it), or flagged for rehoming. On a delete,
+  say which repo held the note — and if it was the metarepo, that the delete is already committed
+  and pushed there, plus any code-repo citation fix left **uncommitted** for the user. Omit the
+  line when the plan named no note or no plan completed.
 - The next-action hand-off: point the user to their `/pjm` session; if the slice came from
   `/pjm run-plan <plan>`, explicitly tell them to return to that same session and continue the
   same plan-run loop for `<plan>` (or, in the fallback case, the `▶ NEXT` line from standup,

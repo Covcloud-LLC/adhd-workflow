@@ -28,9 +28,9 @@ Before reading or writing any lifecycle doc, resolve the **docs root**:
 - If the config file `~/.config/adhd-workflow/backlog-root` exists, read it: it holds one line, the absolute path of a **backlog metarepo** (a git repo that centralizes backlog docs for many code repos) — call it `<backlog-root>`. If `<backlog-root>/<repo>/` exists, **that dir is the docs root** — `ideas/`, `plans/` (with `_done/`), `defects/`, and `BOARD.md` live directly under it (there is **no `docs/` path segment** inside the metarepo).
 - Otherwise fall back to `./docs/` in the current repo, exactly as before.
 
-Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD.md` mean paths under the resolved docs root. **Reasoning notes are the exception: `docs/notes/` ALWAYS stays in the current code repo's own `./docs/notes/`, never the metarepo.** Paths written *inside* a plan/idea/defect are relative to the code repo, not the metarepo.
+Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD.md` mean paths under the resolved docs root. **Reasoning notes follow the docs root too**: `docs/notes/` means `<backlog-root>/<repo>/notes/` when a metarepo is configured, and `./docs/notes/` in the code repo otherwise. Only lifecycle reasoning notes (`*-reasoning.md`, written by `/reason`) live there — durable design, decision, and reference docs stay in the code repo's own `./docs/notes/` and never move. Paths written *inside* a plan/idea/defect are relative to the code repo, not the metarepo.
 
-**Writing under the metarepo:** when the docs root is the metarepo, every file you create, edit, move (`git mv`), or delete there is **immediately committed and pushed**, scoped to the affected path(s): `git -C <backlog-root> add <path> && git -C <backlog-root> commit -m "<msg>" && git -C <backlog-root> push`. This is a deliberate exception to the no-auto-commit rule and applies ONLY to writes under the metarepo. Reads and writes in the code repo (reasoning notes, `scripts/slice-gate.sh`, git-based stall detection) are unchanged and are **NOT** auto-committed.
+**Writing under the metarepo:** when the docs root is the metarepo, every file you create, edit, move (`git mv`), or delete there is **immediately committed and pushed**, scoped to the affected path(s): `git -C <backlog-root> add <path> && git -C <backlog-root> commit -m "<msg>" && git -C <backlog-root> push`. This is a deliberate exception to the no-auto-commit rule and applies ONLY to writes under the metarepo. Reads and writes in the code repo (`scripts/slice-gate.sh`, git-based stall detection, durable `docs/notes/` reference docs) are unchanged and are **NOT** auto-committed.
 
 
 ## The triage axis
@@ -66,7 +66,10 @@ When both are uncertain, run design first (it can change what you build), then a
      chain straight into it (this is the frictionless path — don't make them re-invoke).
    - **reasoned** → Do the pass now: name the decision, lay out 2–3 options with how each fails,
      recommend one with the why. Write it to `docs/notes/<slug>-reasoning.md` (see shape below).
-     Stamp `reasoned: notes/<slug>-reasoning.md`. Tell the user it's ready to `/promote`.
+     When the docs root is the metarepo, the note is created there and immediately committed and
+     pushed scoped to that path, per the metarepo write rule in the Docs root block — this skill
+     never commits to the code repo. Stamp `reasoned: notes/<slug>-reasoning.md`. Tell the user
+     it's ready to `/promote`.
    - **workshop-required** → Do NOT write a note or a plan. Pick the flavor(s). Invoke the
      `design-workshop` skill, passing the problem **and the flavor**, so it builds and pbcopies
      the adversarial kickoff for a separate provider-qualified workshop session. Stamp
@@ -75,7 +78,9 @@ When both are uncertain, run design first (it can change what you build), then a
 4. **After a workshop** (user returns with the synthesis): they re-run `/reason` on the same
    idea. Read their synthesis, write/finalize `docs/notes/<slug>-reasoning.md` capturing the
    decision the workshop reached, and flip the stamp to `reasoned: notes/<slug>-reasoning.md`.
-   Now it's ready to `/promote`.
+   When the docs root is the metarepo, the note is created there and immediately committed and
+   pushed scoped to that path, per the metarepo write rule in the Docs root block — this skill
+   never commits to the code repo. Now it's ready to `/promote`.
 
 ## The reasoning note (`docs/notes/<slug>-reasoning.md`)
 
@@ -115,3 +120,8 @@ Short. It records the decision so `/promote` and future-you don't re-litigate it
 - **`clear` must stay frictionless.** No note, no ceremony — one line and an offer to chain into
   `/promote`. If the gate makes trivial ideas expensive, it will get skipped, and then it protects
   nothing.
+- **When the docs root is the metarepo, leave the code repo's working tree clean.** Both the note
+  and the stamped idea land in the metarepo and are committed there, so `/reason` touches the code
+  repo not at all — a note left uncommitted there is exactly what `/run-plan` step 0 refuses on. In
+  the no-metarepo fallback the note and the stamped idea are ordinary uncommitted changes under
+  `./docs/`, the same as before this rule existed; committing them stays the user's call.

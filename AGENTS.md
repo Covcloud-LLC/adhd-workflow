@@ -59,7 +59,8 @@ Skills read and write the **current repo's** `docs/` directory by default — ne
 absolute path. The one sanctioned indirection is the optional **backlog metarepo**: when
 `~/.config/adhd-workflow/backlog-root` names a metarepo and it has a dir for the current repo,
 the lifecycle skills resolve their docs root there instead (see any skill's "Docs root"
-section; reasoning notes always stay in the code repo). Beyond that, the only global thing is
+section; lifecycle reasoning notes follow the docs root, but durable design/decision/reference
+docs in `docs/notes/` stay in the code repo). Beyond that, the only global thing is
 the skill file itself.
 
 ## Shared conventions the skills depend on
@@ -80,19 +81,26 @@ Changing any of these means changing several skills at once:
 The legacy four-line `Model:`/`OpenAI:`/`Claude:`/`Recommended:` header is **readable but
 deprecated** — `/promote` must never emit it, and `/audit-plans` flags it for migration.
 
-`docs/plans/` is **task-tracked work only.** Design, decision, and reference docs go in
-`docs/notes/`.
+`docs/plans/` is **task-tracked work only.** Durable design, decision, and reference docs stay in
+the code repo's `docs/notes/` and never move. Lifecycle reasoning notes (`*-reasoning.md`, written
+by `/reason`) are different: they are not durable docs, so they resolve under the docs root like
+plans and ideas — the metarepo's `notes/` when one is configured, `./docs/notes/` otherwise.
 
 ## Dogfooding
 
 This repo uses its own workflow on itself, but its lifecycle docs are **not** in this repo. The
 maintainer's `~/.config/adhd-workflow/backlog-root` points at a backlog metarepo with a dir for
-this repo, so the skills resolve the docs root there: `ideas/`, `plans/` (with `_done/`), and
-`defects/` live in that metarepo. Only `docs/notes/` stays here, and it doubles as the worked
-example readers learn from — so it should stay well-formed.
+this repo, so the skills resolve the docs root there: `ideas/`, `plans/` (with `_done/`),
+`defects/`, and lifecycle reasoning notes (`notes/`) live in that metarepo. Only durable
+design/decision/reference docs stay in this repo's `docs/notes/`, and that folder doubles as the
+worked example readers learn from — so it should stay well-formed.
 
-Consequence: if you are looking for a plan or idea for this repo and `docs/plans/` doesn't exist,
-that is expected, not a missing file. Resolve the docs root the way the skills do (read
+The nine reasoning notes that existed before this convention were not bulk-migrated. Eight of them
+stay in this repo's `docs/notes/` alongside `slice-gate-convention.md`; the ninth — this plan's own
+reasoning note — moved to the metarepo as the first live example.
+
+Consequence: if you are looking for a plan, idea, or reasoning note for this repo and it isn't
+under `docs/`, that is expected, not a missing file. Resolve the docs root the way the skills do (read
 `~/.config/adhd-workflow/backlog-root`, then look for `<backlog-root>/adhd-workflow/`) instead of
 assuming a path.
 
