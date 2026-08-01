@@ -37,45 +37,6 @@ merge a feature. The one unattended lane is `/run-plan`, and it only runs *insid
 already-reasoned, already-promoted plan: it drives that plan's slices with no human between them,
 but it never pushes, never merges, and halts at the first red instead of trying again.
 
-## Install
-
-The workflow itself is not Codex-specific. The same repo-native artifacts and handoff strings are
-meant to work from Codex or Claude Code. The installer below targets Codex's local skill layout;
-Claude Code users can use the same skill text from `skills/` in their Claude Code skill setup.
-
-```bash
-git clone https://github.com/<you>/adhd-workflow.git
-cd adhd-workflow
-./install.sh
-```
-
-The script symlinks each skill into `${CODEX_HOME:-~/.codex}/skills/`, including `wrap-up`, so
-the skills are available in **every** repo you open from Codex. This repo stays the source of
-truth — edit a skill here and the change is live in your next compatible agent session. In Codex,
-start a new session, then type `/idea` or explicitly invoke `$idea` in any project.
-
-Use `--force` to replace files already at those paths (they get backed up to `<name>.bak`), and
-`--uninstall` to remove the symlinks.
-
-Keep the clone where it is. `/run-plan` resolves `scripts/slice-gate.sh` by following its own
-skill symlink back into this repo, so moving or deleting the clone leaves that skill without its
-gate — and it refuses to run rather than falling back to judgment.
-
-The installer also links everything in `output-styles/` into
-`${CODEX_HOME:-~/.codex}/output-styles/`. Those are **Claude Code only** — output styles have no
-Codex equivalent, so under Codex the directory is created and then ignored.
-
-Claude Code reads output styles from its own config directory, so the default `CODEX_HOME` puts
-them somewhere Claude Code will never look. Point `CODEX_HOME` at your Claude config directory
-when you install:
-
-```bash
-CODEX_HOME=~/.claude ./install.sh
-```
-
-Then select the style with `/config` → Output style → `ADHD`, or set `"outputStyle": "ADHD"` in
-`settings.json`. It shapes the prose around a skill's report, never the report format itself.
-
 ## The workflow triggers
 
 | Stage | Trigger | What it does | Output |
@@ -118,6 +79,90 @@ stay in the code repo's own `docs/notes/`. No config file, no change: everything
 Model-sensitive handoffs are provider-qualified. A plan should name an OpenAI route, a Claude
 route, and a recommended default between them for the surface you're using, for example Codex/OpenAI
 `gpt-5.5 · high` or Claude Code `claude-opus-4-8 · high`.
+
+## How this differs from other AI-centric workflows
+
+**Compared with Brainstorm -> Spec -> Plan -> Ship flows:** this workflow agrees that vague
+prompts should not go straight to code. The difference is where the structure lives. Brainstorm
+first workflows usually produce a design/spec artifact, then move toward implementation. This repo
+keeps the whole lifecycle in small repo-native files: ideas, reasoning notes, executable plans,
+defects, wrap-up records, and archived completed plans. The goal is not only a better first spec;
+it is recoverable state across many agent sessions.
+
+**Compared with Refine/Plan/Act workflows:** this adds a hard reasoning gate before planning and a
+hard wrap-up gate after execution. `/promote` refuses unreasoned or vague ideas. `/wrap-up`
+reconciles slice status, captures knowledge, and returns control to `/pjm` instead of letting the
+execution session drift into the next task.
+
+**Compared with autonomous multi-agent systems:** the automation is narrow and the verification is
+not a model. `/run-plan` will drive a whole plan unattended, but only a plan that already passed
+`/reason` and `/promote`, only serially (parallel fan-out destroys the attribution that makes a
+red meaningful), and only while a script keeps exiting 0. The driving session holds no opinion
+about the work and never reads the diff. Pushes, merges, branch pruning, plan archival, and plan
+status changes still require you.
+
+**Compared with issue-tracker-first workflows:** the source of truth is the repo. Plans are
+Markdown files with `task:` strings and `Verify:` clauses, not tickets that need a bot to
+reinterpret them. That makes the workflow portable across tools and easy for a new agent session
+to read cold.
+
+## Install
+
+The workflow itself is not Codex-specific. The same repo-native artifacts and handoff strings are
+meant to work from Codex or Claude Code. The installer below targets Codex's local skill layout;
+Claude Code users can use the same skill text from `skills/` in their Claude Code skill setup.
+
+```bash
+git clone https://github.com/<you>/adhd-workflow.git
+cd adhd-workflow
+./install.sh
+```
+
+The script symlinks each skill into `${CODEX_HOME:-~/.codex}/skills/`, including `wrap-up`, so
+the skills are available in **every** repo you open from Codex. This repo stays the source of
+truth — edit a skill here and the change is live in your next compatible agent session. In Codex,
+start a new session, then type `/idea` or explicitly invoke `$idea` in any project.
+
+Use `--force` to replace files already at those paths (they get backed up to `<name>.bak`), and
+`--uninstall` to remove the symlinks.
+
+Keep the clone where it is. `/run-plan` resolves `scripts/slice-gate.sh` by following its own
+skill symlink back into this repo, so moving or deleting the clone leaves that skill without its
+gate — and it refuses to run rather than falling back to judgment.
+
+The installer also links everything in `output-styles/` into
+`${CODEX_HOME:-~/.codex}/output-styles/`. Those are **Claude Code only** — output styles have no
+Codex equivalent, so under Codex the directory is created and then ignored.
+
+Claude Code reads output styles from its own config directory, so the default `CODEX_HOME` puts
+them somewhere Claude Code will never look. Point `CODEX_HOME` at your Claude config directory
+when you install:
+
+```bash
+CODEX_HOME=~/.claude ./install.sh
+```
+
+Then select the style with `/config` → Output style → `ADHD`, or set `"outputStyle": "ADHD"` in
+`settings.json`. It shapes the prose around a skill's report, never the report format itself.
+
+## Adoption path
+
+Start small:
+
+1. Install the skills.
+2. In an existing repo, capture one real idea with `/idea`.
+3. Run `/reason <slug>`.
+4. If it passes, run `/promote <slug>`.
+5. Use `/standup` or `/pjm` to get exactly one executable task string.
+6. Run the task in a fresh agent session.
+7. Finish with `/wrap-up`.
+
+After that loop feels natural, add `/pjm run-plan <plan>` for longer plans, `/defect` and
+`/diagnose` for bugs, and `/audit-plans` as a weekly hygiene pass.
+
+Reach for `/run-plan <plan>` once you notice you're approving every checkpoint without changing
+anything — that's the signal the checkpoint is no longer earning its keep. Try it first on a plan
+you'd be happy to `git reset --hard`.
 
 ## Running a plan unattended: `/run-plan`
 
@@ -169,32 +214,6 @@ Two requirements: the driving surface needs **real subagents** (Claude Code toda
 the repo needs a whole-tree check command that can exit non-zero. A repo with no check has no
 witness, and the gate refuses to run there.
 
-## How this differs from other AI-centric workflows
-
-**Compared with Brainstorm -> Spec -> Plan -> Ship flows:** this workflow agrees that vague
-prompts should not go straight to code. The difference is where the structure lives. Brainstorm
-first workflows usually produce a design/spec artifact, then move toward implementation. This repo
-keeps the whole lifecycle in small repo-native files: ideas, reasoning notes, executable plans,
-defects, wrap-up records, and archived completed plans. The goal is not only a better first spec;
-it is recoverable state across many agent sessions.
-
-**Compared with Refine/Plan/Act workflows:** this adds a hard reasoning gate before planning and a
-hard wrap-up gate after execution. `/promote` refuses unreasoned or vague ideas. `/wrap-up`
-reconciles slice status, captures knowledge, and returns control to `/pjm` instead of letting the
-execution session drift into the next task.
-
-**Compared with autonomous multi-agent systems:** the automation is narrow and the verification is
-not a model. `/run-plan` will drive a whole plan unattended, but only a plan that already passed
-`/reason` and `/promote`, only serially (parallel fan-out destroys the attribution that makes a
-red meaningful), and only while a script keeps exiting 0. The driving session holds no opinion
-about the work and never reads the diff. Pushes, merges, branch pruning, plan archival, and plan
-status changes still require you.
-
-**Compared with issue-tracker-first workflows:** the source of truth is the repo. Plans are
-Markdown files with `task:` strings and `Verify:` clauses, not tickets that need a bot to
-reinterpret them. That makes the workflow portable across tools and easy for a new agent session
-to read cold.
-
 ## Design principles
 
 - **Capture is cheap; commitment is expensive.** `/idea` writes a raw thought and stops.
@@ -210,25 +229,6 @@ to read cold.
   `docs/defects/` are the durable memory.
 - **Provider routing is explicit.** Plans can carry both Codex/OpenAI and Claude Code routes plus
   the recommended default for the current surface.
-
-## Adoption path
-
-Start small:
-
-1. Install the skills.
-2. In an existing repo, capture one real idea with `/idea`.
-3. Run `/reason <slug>`.
-4. If it passes, run `/promote <slug>`.
-5. Use `/standup` or `/pjm` to get exactly one executable task string.
-6. Run the task in a fresh agent session.
-7. Finish with `/wrap-up`.
-
-After that loop feels natural, add `/pjm run-plan <plan>` for longer plans, `/defect` and
-`/diagnose` for bugs, and `/audit-plans` as a weekly hygiene pass.
-
-Reach for `/run-plan <plan>` once you notice you're approving every checkpoint without changing
-anything — that's the signal the checkpoint is no longer earning its keep. Try it first on a plan
-you'd be happy to `git reset --hard`.
 
 ## Read more
 
