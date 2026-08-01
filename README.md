@@ -66,10 +66,9 @@ Plus the supporting cast:
 - `/draft-spec` and `/draft-guide` — write the docs, *after* the thing exists.
 
 By default everything reads and writes the **current repo's** `docs/` directory, and the skills
-themselves are the only global piece. There is one optional exception:
-
-if you keep your backlogs in one central git repo instead of per-repo `docs/`
-directories, write that repo's absolute path (one line) to `~/.config/adhd-workflow/backlog-root`.
+themselves are the only global piece. There is one optional exception: if you keep your backlogs
+in one central git repo instead of per-repo `docs/` directories, write that repo's absolute path
+(one line) to `~/.config/adhd-workflow/backlog-root`.
 When `<backlog-root>/<repo-name>/` exists, the skills use it as the docs root for that repo —
 `ideas/`, `plans/`, `defects/`, and `BOARD.md` live directly under it — and auto-commit-and-push
 writes there. Lifecycle reasoning notes (the `*-reasoning.md` files `/reason` writes) follow the
