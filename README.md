@@ -37,6 +37,74 @@ merge a feature. The one unattended lane is `/run-plan`, and it only runs *insid
 already-reasoned, already-promoted plan: it drives that plan's slices with no human between them,
 but it never pushes, never merges, and halts at the first red instead of trying again.
 
+## The workflow triggers
+
+| Stage | Trigger | What it does | Output |
+|---|---|---|---|
+| **Ideate** | `/idea` | Dumps a raw thought to disk and gets out of the way. | `docs/ideas/` |
+| **Reason** | `/reason` | Decides whether the idea is sound and how much thinking it needs. | a stamp on the idea |
+| **Plan** | `/promote` | Turns a reasoned idea into a runnable plan. Refuses vague ones. | `docs/plans/` |
+| **Execute** | *(fresh session)* or `/run-plan` | Runs the plan's task strings and builds the thing — by hand-off, or slice-by-slice under a scripted gate. | code |
+| **Validate** | `/wrap-up` / `$wrap-up` | Confirms it's done, captures what you learned, hands back to the driver. | plan status |
+
+Plus the supporting cast:
+
+- `/standup` — the daily driver. Names the ONE next action, enforces a limit of 2 things in
+  flight at once, flags plans that have gone stale.
+- `/pjm` — a project-manager session you keep open for a work block. It drives and tracks; it
+  never builds. It hands you task strings to paste into fresh Codex or Claude Code sessions.
+  `/pjm run-plan <plan>` can drive one plan slice-by-slice through checkpointed handoffs, but
+  each slice still runs in a fresh execution session and must come back through `/wrap-up`
+  before PJM continues to the next slice.
+- `/run-plan <plan>` — the hands-off version of that loop, for when the handoffs are pure
+  keystrokes. It drives a plan's open slices serially with no human between them. See below.
+- `/design-workshop` — builds a prompt for a separate "critic" session that attacks a hard
+  problem before you commit to it. `/reason` calls this when an idea needs it.
+- `/audit-plans` — a weekly hygiene pass over the backlog.
+- `/defect` and `/diagnose` — capture a bug, then root-cause it with evidence (two separate
+  steps, on purpose).
+- `/draft-spec` and `/draft-guide` — write the docs, *after* the thing exists.
+
+By default everything reads and writes the **current repo's** `docs/` directory, and the skills
+themselves are the only global piece. There is one optional exception: if you keep your backlogs
+in one central git repo instead of per-repo `docs/` directories, write that repo's absolute path
+(one line) to `~/.config/adhd-workflow/backlog-root`.
+When `<backlog-root>/<repo-name>/` exists, the skills use it as the docs root for that repo —
+`ideas/`, `plans/`, `defects/`, and `BOARD.md` live directly under it — and auto-commit-and-push
+writes there. Lifecycle reasoning notes (the `*-reasoning.md` files `/reason` writes) follow the
+docs root into `<backlog-root>/<repo-name>/notes/`; durable design, decision, and reference docs
+stay in the code repo's own `docs/notes/`. No config file, no change: everything stays per-repo.
+
+Model-sensitive handoffs are provider-qualified. A plan should name an OpenAI route, a Claude
+route, and a recommended default between them for the surface you're using, for example Codex/OpenAI
+`gpt-5.5 · high` or Claude Code `claude-opus-4-8 · high`.
+
+## How this differs from other AI-centric workflows
+
+**Compared with Brainstorm -> Spec -> Plan -> Ship flows:** this workflow agrees that vague
+prompts should not go straight to code. The difference is where the structure lives. Brainstorm
+first workflows usually produce a design/spec artifact, then move toward implementation. This repo
+keeps the whole lifecycle in small repo-native files: ideas, reasoning notes, executable plans,
+defects, wrap-up records, and archived completed plans. The goal is not only a better first spec;
+it is recoverable state across many agent sessions.
+
+**Compared with Refine/Plan/Act workflows:** this adds a hard reasoning gate before planning and a
+hard wrap-up gate after execution. `/promote` refuses unreasoned or vague ideas. `/wrap-up`
+reconciles slice status, captures knowledge, and returns control to `/pjm` instead of letting the
+execution session drift into the next task.
+
+**Compared with autonomous multi-agent systems:** the automation is narrow and the verification is
+not a model. `/run-plan` will drive a whole plan unattended, but only a plan that already passed
+`/reason` and `/promote`, only serially (parallel fan-out destroys the attribution that makes a
+red meaningful), and only while a script keeps exiting 0. The driving session holds no opinion
+about the work and never reads the diff. Pushes, merges, branch pruning, plan archival, and plan
+status changes still require you.
+
+**Compared with issue-tracker-first workflows:** the source of truth is the repo. Plans are
+Markdown files with `task:` strings and `Verify:` clauses, not tickets that need a bot to
+reinterpret them. That makes the workflow portable across tools and easy for a new agent session
+to read cold.
+
 ## Install
 
 The workflow itself is not Codex-specific. The same repo-native artifacts and handoff strings are
@@ -76,48 +144,24 @@ CODEX_HOME=~/.claude ./install.sh
 Then select the style with `/config` → Output style → `ADHD`, or set `"outputStyle": "ADHD"` in
 `settings.json`. It shapes the prose around a skill's report, never the report format itself.
 
-## The workflow triggers
+## Adoption path
 
-| Stage | Trigger | What it does | Output |
-|---|---|---|---|
-| **Ideate** | `/idea` | Dumps a raw thought to disk and gets out of the way. | `docs/ideas/` |
-| **Reason** | `/reason` | Decides whether the idea is sound and how much thinking it needs. | a stamp on the idea |
-| **Plan** | `/promote` | Turns a reasoned idea into a runnable plan. Refuses vague ones. | `docs/plans/` |
-| **Execute** | *(fresh session)* or `/run-plan` | Runs the plan's task strings and builds the thing — by hand-off, or slice-by-slice under a scripted gate. | code |
-| **Validate** | `/wrap-up` / `$wrap-up` | Confirms it's done, captures what you learned, hands back to the driver. | plan status |
+Start small:
 
-Plus the supporting cast:
+1. Install the skills.
+2. In an existing repo, capture one real idea with `/idea`.
+3. Run `/reason <slug>`.
+4. If it passes, run `/promote <slug>`.
+5. Use `/standup` or `/pjm` to get exactly one executable task string.
+6. Run the task in a fresh agent session.
+7. Finish with `/wrap-up`.
 
-- `/standup` — the daily driver. Names the ONE next action, enforces a limit of 2 things in
-  flight at once, flags plans that have gone stale.
-- `/pjm` — a project-manager session you keep open for a work block. It drives and tracks; it
-  never builds. It hands you task strings to paste into fresh Codex or Claude Code sessions.
-  `/pjm run-plan <plan>` can drive one plan slice-by-slice through checkpointed handoffs, but
-  each slice still runs in a fresh execution session and must come back through `/wrap-up`
-  before PJM continues to the next slice.
-- `/run-plan <plan>` — the hands-off version of that loop, for when the handoffs are pure
-  keystrokes. It drives a plan's open slices serially with no human between them. See below.
-- `/design-workshop` — builds a prompt for a separate "critic" session that attacks a hard
-  problem before you commit to it. `/reason` calls this when an idea needs it.
-- `/audit-plans` — a weekly hygiene pass over the backlog.
-- `/defect` and `/diagnose` — capture a bug, then root-cause it with evidence (two separate
-  steps, on purpose).
-- `/draft-spec` and `/draft-guide` — write the docs, *after* the thing exists.
+After that loop feels natural, add `/pjm run-plan <plan>` for longer plans, `/defect` and
+`/diagnose` for bugs, and `/audit-plans` as a weekly hygiene pass.
 
-By default everything reads and writes the **current repo's** `docs/` directory, and the skills
-themselves are the only global piece. There is one optional exception:
-
-if you keep your backlogs in one central git repo instead of per-repo `docs/`
-directories, write that repo's absolute path (one line) to `~/.config/adhd-workflow/backlog-root`.
-When `<backlog-root>/<repo-name>/` exists, the skills use it as the docs root for that repo —
-`ideas/`, `plans/`, `defects/`, and `BOARD.md` live directly under it — and auto-commit-and-push
-writes there. Lifecycle reasoning notes (the `*-reasoning.md` files `/reason` writes) follow the
-docs root into `<backlog-root>/<repo-name>/notes/`; durable design, decision, and reference docs
-stay in the code repo's own `docs/notes/`. No config file, no change: everything stays per-repo.
-
-Model-sensitive handoffs are provider-qualified. A plan should name an OpenAI route, a Claude
-route, and a recommended default between them for the surface you're using, for example Codex/OpenAI
-`gpt-5.5 · high` or Claude Code `claude-opus-4-8 · high`.
+Reach for `/run-plan <plan>` once you notice you're approving every checkpoint without changing
+anything — that's the signal the checkpoint is no longer earning its keep. Try it first on a plan
+you'd be happy to `git reset --hard`.
 
 ## Running a plan unattended: `/run-plan`
 
@@ -169,32 +213,6 @@ Two requirements: the driving surface needs **real subagents** (Claude Code toda
 the repo needs a whole-tree check command that can exit non-zero. A repo with no check has no
 witness, and the gate refuses to run there.
 
-## How this differs from other AI-centric workflows
-
-**Compared with Brainstorm -> Spec -> Plan -> Ship flows:** this workflow agrees that vague
-prompts should not go straight to code. The difference is where the structure lives. Brainstorm
-first workflows usually produce a design/spec artifact, then move toward implementation. This repo
-keeps the whole lifecycle in small repo-native files: ideas, reasoning notes, executable plans,
-defects, wrap-up records, and archived completed plans. The goal is not only a better first spec;
-it is recoverable state across many agent sessions.
-
-**Compared with Refine/Plan/Act workflows:** this adds a hard reasoning gate before planning and a
-hard wrap-up gate after execution. `/promote` refuses unreasoned or vague ideas. `/wrap-up`
-reconciles slice status, captures knowledge, and returns control to `/pjm` instead of letting the
-execution session drift into the next task.
-
-**Compared with autonomous multi-agent systems:** the automation is narrow and the verification is
-not a model. `/run-plan` will drive a whole plan unattended, but only a plan that already passed
-`/reason` and `/promote`, only serially (parallel fan-out destroys the attribution that makes a
-red meaningful), and only while a script keeps exiting 0. The driving session holds no opinion
-about the work and never reads the diff. Pushes, merges, branch pruning, plan archival, and plan
-status changes still require you.
-
-**Compared with issue-tracker-first workflows:** the source of truth is the repo. Plans are
-Markdown files with `task:` strings and `Verify:` clauses, not tickets that need a bot to
-reinterpret them. That makes the workflow portable across tools and easy for a new agent session
-to read cold.
-
 ## Design principles
 
 - **Capture is cheap; commitment is expensive.** `/idea` writes a raw thought and stops.
@@ -210,25 +228,6 @@ to read cold.
   `docs/defects/` are the durable memory.
 - **Provider routing is explicit.** Plans can carry both Codex/OpenAI and Claude Code routes plus
   the recommended default for the current surface.
-
-## Adoption path
-
-Start small:
-
-1. Install the skills.
-2. In an existing repo, capture one real idea with `/idea`.
-3. Run `/reason <slug>`.
-4. If it passes, run `/promote <slug>`.
-5. Use `/standup` or `/pjm` to get exactly one executable task string.
-6. Run the task in a fresh agent session.
-7. Finish with `/wrap-up`.
-
-After that loop feels natural, add `/pjm run-plan <plan>` for longer plans, `/defect` and
-`/diagnose` for bugs, and `/audit-plans` as a weekly hygiene pass.
-
-Reach for `/run-plan <plan>` once you notice you're approving every checkpoint without changing
-anything — that's the signal the checkpoint is no longer earning its keep. Try it first on a plan
-you'd be happy to `git reset --hard`.
 
 ## Read more
 
