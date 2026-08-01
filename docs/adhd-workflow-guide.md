@@ -201,14 +201,19 @@ build.
   then require `/wrap-up` after that slice before the next slice is assigned.
 
 When a run finishes clean, that only proves the tree is green — not that the code is good. So a
-clean run ends by recommending a quality pass, not by doing one: tidy the code with `/simplify`,
-re-run the repo's own check, then read it over with `/code-review`. The run already committed
-every slice, so it hands you the `/simplify` command with the commit range filled in — a bare
-`/simplify` would look at an empty working tree and tell you the code is already clean. That's a
-recommendation for you to run yourself afterward — the runner names the steps and stops there.
-A run that halts
-(a red check, or a question it couldn't answer) skips this entirely: nothing finished, so there's
-nothing yet worth polishing.
+run that actually landed a slice ends by recommending a quality pass, not by doing one: tidy the
+code with `/simplify`, re-run the repo's own check, then read it over with `/code-review`. The
+run already committed every slice, so it hands you the `/simplify` command with the commit range
+filled in — a bare `/simplify` would look at an empty working tree and tell you the code is
+already clean. That's a recommendation for you to run yourself afterward — the runner names the
+steps and stops there. Both commands are Claude Code's; this is the one place the walkthrough
+describes a Claude-only path, and on a Codex run the runner stays quiet rather than name a
+command you don't have.
+
+Two kinds of run skip the offer. A halted one (a red check, or a question it couldn't answer)
+skips it because the tree is left unfinished — earlier slices may well have landed, but the next
+thing to do is fix the halt, not polish around it. And a resume that finds every slice already
+done skips it because nothing changed.
 
 ### Worktrees: keeping parallel sessions out of each other's way
 

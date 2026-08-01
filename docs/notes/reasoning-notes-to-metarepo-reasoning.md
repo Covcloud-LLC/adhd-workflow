@@ -14,7 +14,7 @@ next lifecycle skill, deleted when it has been consumed. It belongs where ideas,
 defects already live.
 
 The cost of the carve-out is concrete and recurring: `/reason` writes an uncommitted file into the
-code repo, and `skills/run-plan/SKILL.md:49` (step 0, check 4) refuses to start on a dirty tree.
+code repo, and `skills/run-plan/SKILL.md` (step 0, check 4) refuses to start on a dirty tree.
 So the reasoning gate reliably blocks the execution stage that follows it. Writing *this* note
 dirtied the worktree in exactly that way.
 
