@@ -79,21 +79,28 @@ Changing any of these means changing several skills at once:
 The legacy four-line `Model:`/`OpenAI:`/`Claude:`/`Recommended:` header is **readable but
 deprecated** — `/promote` must never emit it, and `/audit-plans` flags it for migration.
 
-`docs/plans/` is **task-tracked work only.** Design, decision, and reference docs go in
-`docs/notes/`.
+`docs/plans/` is **task-tracked work only.** Durable design, decision, and reference docs stay in
+the code repo's `docs/notes/` and never move. Lifecycle reasoning notes (`*-reasoning.md`, written
+by `/reason`) are different: they are not durable docs, so they resolve under the docs root like
+plans and ideas — the metarepo's `notes/` when one is configured, `./docs/notes/` otherwise.
 
 ## Dogfooding
 
 This repo uses its own workflow on itself, but its lifecycle docs are **not** in this repo. The
 maintainer's `~/.config/adhd-workflow/backlog-root` points at a backlog metarepo with a dir for
-this repo, so the skills resolve the docs root there: `ideas/`, `plans/` (with `_done/`), and
-`defects/` live in that metarepo. Only `docs/notes/` stays here, and it doubles as the worked
-example readers learn from — so it should stay well-formed.
+this repo, so the skills resolve the docs root there: `ideas/`, `plans/` (with `_done/`),
+`defects/`, and lifecycle reasoning notes (`notes/`) live in that metarepo. Only durable
+design/decision/reference docs stay in this repo's `docs/notes/`, and that folder doubles as the
+worked example readers learn from — so it should stay well-formed.
 
-Consequence: if you are looking for a plan or idea for this repo and `docs/plans/` doesn't exist,
-that is expected, not a missing file. Resolve the docs root the way the skills do (read
-`~/.config/adhd-workflow/backlog-root`, then look for `<backlog-root>/adhd-workflow/`) instead of
-assuming a path.
+The nine reasoning notes that existed before this convention were not bulk-migrated. Eight of them
+stay in this repo's `docs/notes/` alongside `slice-gate-convention.md`; the ninth — this plan's own
+reasoning note — moved to the metarepo as the first live example.
+
+Consequence: if you are looking for a plan, idea, or reasoning note for this repo and it isn't
+under `docs/`, that is expected, not a missing file. Resolve the docs root the way the skills do
+(read `~/.config/adhd-workflow/backlog-root`, then look for `<backlog-root>/adhd-workflow/`)
+instead of assuming a path.
 
 To change a skill, capture the idea with `/idea` and run `/reason` on it first, rather than
 editing the skill directly. The one exception is a typo or broken link.
