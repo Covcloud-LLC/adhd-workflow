@@ -200,6 +200,13 @@ build.
   by stopping at each checkpoint: hand off the next slice, wait for a fresh execution session,
   then require `/wrap-up` after that slice before the next slice is assigned.
 
+When a run finishes clean, that only proves the tree is green — not that the code is good. So a
+clean run ends by recommending a quality pass, not by doing one: tidy the code with `/simplify`,
+re-run the repo's own check, then read it over with `/code-review`. That's a recommendation for
+you to run yourself afterward — the runner names the steps and stops there. A run that halts
+(a red check, or a question it couldn't answer) skips this entirely: nothing finished, so there's
+nothing yet worth polishing.
+
 ### Worktrees: keeping parallel sessions out of each other's way
 
 When `/pjm` sets up a branch for a slice, it offers a choice: check the branch out in place
