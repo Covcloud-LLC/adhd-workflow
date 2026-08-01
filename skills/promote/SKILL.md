@@ -31,9 +31,11 @@ An idea must clear the `/reason` gate before it can become a plan. Read the idea
   write a plan. (An idea captured by `/idea` and never reasoned has no `reasoned:` field.)
 - **`workshop-pending (…)`** → refuse. "This idea is waiting on a `<flavor>` workshop — run it,
   then re-run `/reason` to close the gate." Stop.
-- **`clear`** or **`notes/<…>-reasoning.md`** → precondition met. If it points at a note, read the
-  note — its Decision / chosen option / carried risks are inputs to the plan; the plan must reflect
-  them, not re-litigate them. Proceed to the rubric.
+- **`clear`** or **`notes/<…>-reasoning.md`** → precondition met. If it points at a note, resolve
+  the stamp value under the docs root (per *Docs root* above — the metarepo's `notes/` when one is
+  configured, `./docs/notes/` in the code repo otherwise), then read the note — its Decision /
+  chosen option / carried risks are inputs to the plan; the plan must reflect them, not re-litigate
+  them. Proceed to the rubric.
 
 This is a *separate* gate from the rubric below. `/reason` decided the idea is sound and
 thought-through; the rubric decides the *plan artifact* is well-formed enough to run cold. Both

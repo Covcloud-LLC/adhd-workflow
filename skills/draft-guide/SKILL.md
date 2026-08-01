@@ -1,6 +1,6 @@
 ---
 name: draft-guide
-description: Draft a prose-shaped Diátaxis doc for the CURRENT repo's shipped docs as a technically-verified first draft for the user's own voice pass — not ship-final prose. Five modes: tutorial, how-to, quickstart, brief (post-build knowledge transfer), explanation (promote a docs/notes/ reasoning note). Matches the repo's house voice by reading sibling docs, pulls the audience from the plan/doc header (never invents one), verifies every command/output/money amount against source or the running service before writing it, holds a plain-technical reading level (no academic register), and stamps the six-field shipped-doc front-matter. Use when the user types /draft-guide, or says "draft a tutorial/how-to/quickstart/walkthrough", "write a guide for X", "write the brief for X", "promote this reasoning note into a doc". Reference/contract material belongs to /draft-spec.
+description: Draft a prose-shaped Diátaxis doc for the CURRENT repo's shipped docs as a technically-verified first draft for the user's own voice pass — not ship-final prose. Five modes: tutorial, how-to, quickstart, brief (post-build knowledge transfer), explanation (promote a reasoning note, resolved under the docs root). Matches the repo's house voice by reading sibling docs, pulls the audience from the plan/doc header (never invents one), verifies every command/output/money amount against source or the running service before writing it, holds a plain-technical reading level (no academic register), and stamps the six-field shipped-doc front-matter. Use when the user types /draft-guide, or says "draft a tutorial/how-to/quickstart/walkthrough", "write a guide for X", "write the brief for X", "promote this reasoning note into a doc". Reference/contract material belongs to /draft-spec.
 ---
 
 # /draft-guide — draft a prose-shaped shipped doc
@@ -35,7 +35,7 @@ State the mode and one-line reason *before* drafting — **mandatory for all fiv
 | **How-to** | Competent reader has a *specific goal* — independent, goal-first recipes ("To do X, …"). |
 | **Quickstart** | Shortest path to *first success* — tutorial-shaped but minimal: fewest steps, no detours, no theory. |
 | **Brief** | *Post-build knowledge transfer* to another dev/stakeholder — what this is, why it exists, how it behaves, gotchas. Source it from the plan + reasoning note + diff. |
-| **Explanation** | An existing `docs/notes/` reasoning note deserves *promotion to a shipped doc* — **transform the note, don't rewrite from scratch**; the process already wrote the raw material. |
+| **Explanation** | An existing reasoning note deserves *promotion to a shipped doc* — resolve it under the docs root (same backlog-root rule as `docs/plans/` above, applied to `notes/`) — **transform the note, don't rewrite from scratch**; the process already wrote the raw material. |
 
 Mode discipline:
 - **Tutorial**: no branching, no alternatives, no edge-case catalog. "You will build…".
@@ -118,8 +118,11 @@ source: <the plan/note/diff paths this was drafted from>
 
 `verified-against` is the SHA at which Step 4's checks were run — it's how `/audit-plans` later
 detects staleness. If verification hit a live endpoint instead of source, note that alongside the
-SHA. For **explanation** mode, `source:` must name the promoted `docs/notes/` file; for **brief**
-mode, the plan + reasoning note it was sourced from.
+SHA. For **explanation** mode, `source:` must name the promoted reasoning note **at its resolved
+path** — the backlog metarepo's `notes/<slug>-reasoning.md` when one is configured, or
+`docs/notes/<slug>-reasoning.md` in the code repo otherwise — not a hardcoded `docs/notes/...`
+literal when the note actually lives in the metarepo; for **brief** mode, the plan + reasoning
+note it was sourced from, resolved the same way.
 
 ## Step 6 — Hand off (don't claim it's final)
 
