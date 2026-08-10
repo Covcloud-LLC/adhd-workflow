@@ -49,7 +49,7 @@ must pass.
    - If the missing pieces are things only the user knows (scope, acceptance criteria, which files), **refuse**: list each failed criterion and the specific question that would fix it. Stop. Do not write a plan.
    - If you can responsibly infer the missing structure from the repo and the idea, draft it — but show the user the inferences and let them correct before finalizing.
 4. On pass: draft the whole plan — but **read it back before anything is written to disk.**
-   - Decompose into tasks, each with a self-contained `task:` string and a `Verify:` clause. Set the plan's **`> Default run tier:`** header and a **`> Run at:`** line on every slice (see *Run tiers: per slice, not per plan* below for the shape, and *Model & provider-aware Effort* for which slug and effort to pick). Never emit the legacy `Model:`/`OpenAI:`/`Claude:`/`Recommended:` block. If the effort on a slice — or the plan default, for slices with no `Run at:` line — is `high`+ (or the plan carries `> Red-gate: yes`), apply the **red-gate authoring rule** below to each correctness-sensitive task and set the whole-tree `> Check:` header.
+   - Decompose into tasks, each with a self-contained `task:` string and a `Verify:` clause. Set the plan's **`> Default run tier:`** header and a **`> Run at:`** line on every slice (see *Run tiers: per slice, not per plan* below for the shape, and *Model & provider-aware Effort* for which slug and effort to pick). Never emit the legacy `Model:`/`OpenAI:`/`Claude:`/`Recommended:` block. If the effort on a slice — or the plan default, for slices with no `Run at:` line — is `high`+ (or the plan carries `> Red-gate: yes`), apply the **red-gate authoring rule** below to each correctness-sensitive task and set the whole-tree `> Check:` header. Whenever you set that header, two things follow and neither is optional: **probe the command** (see the `Check:` header paragraph under *House format*) and **give every slice a declared lane** (see *Every slice in a `Check:` plan declares its lane*).
    - With the slices drafted and **no file created yet**, write the brief and the decision delta from them (see *The brief and the decision delta*), and present **ONE** message containing exactly three things: the **brief**, the **decision delta** (or the explicit "None — …" line), and the question **"Write it?"** Then stop and wait for the user's yes.
    - **One message, one yes.** Do not follow it with a second rubric, a confirmation checklist, or a round of questions — the user has ADHD and a second gate is where a ready plan dies. If they correct something, fold the correction into the draft and re-ask in the same one-message shape.
    - On yes: write `docs/plans/<slug>.md` in house format with `status: todo` (promotion does NOT start work), then **remove the idea file** from `docs/ideas/` (it has graduated) — or note it if the user wants it kept — and commit/push if the docs root is the metarepo. Exactly as before; the read-back changes when you write, not what you write.
@@ -115,7 +115,7 @@ human skimming this a week from now>
 > Why this tier: <one line naming the specific latitude or trap that sets the tier>
 > task: Check: <the concrete test file/case agent A authors, with its key assertions — and nothing else>. Build: <the implementation work, self-contained: paths, contract, behavior>. Verify: <runnable command naming the check, e.g. pnpm test -t "<ID>-1">.
 
-### <ID>-2 — <task title>   <!-- plain shape: exempt or non-red-gated slices -->
+### <ID>-2 — <task title>   <!-- exempt slices only; the task string must name the exemption -->
 > status: todo · depends: <ID>-1
 > Run at: Claude Code **<friendly-name> · <effort>** · Codex **<friendly-name> · <effort>**
 > Why this tier: <one line>
@@ -133,6 +133,29 @@ emit it. `/audit-plans` flags it for migration.)
 The `Check:` header names the command that proves the whole tree still works (build + full test
 suite). `/run-plan` refuses to drive a plan without it — no whole-tree check means no witness
 that a slice broke nothing. It is optional for plans that will only ever be hand-run.
+
+**The command must already resolve in the tree as it stands today** — not after slice 1 lands.
+`/run-plan` step 0 runs it once before the first slice and refuses on exit 126/127 ("this repo has
+no witness"), so a header naming a harness the plan itself builds makes the plan unrunnable from
+its own first line. In a repo with no whole-tree command yet, naming the one the plan is about to
+create is the natural thing to write — which is exactly why this needs saying.
+
+**Probe it before the plan is written.** During the read-back (step 4), run the candidate `Check:`
+command once — directly, never through a pipe — and read `$?` immediately:
+
+- **126 or 127** — the command does not resolve. Do not write that header. Either widen it to a
+  command that is green today and grows to cover what the plan builds (e.g.
+  `for t in scripts/*/test/run-tests.sh; do bash "$t" || exit 1; done` already covers a harness
+  slice 1 has not created yet), or drop the header and say in the plan that it is hand-run only.
+  Show the user which you did, in the read-back message.
+- **any other non-zero** — the tree is red today. Write the header, and add one line to the
+  read-back: `/run-plan` refuses a red baseline too, so the tree has to be green before this plan
+  can be driven. That is a warning, not a refusal — a plan whose whole job is fixing that red is
+  legitimate.
+- **0** — green baseline. Say nothing.
+
+This is the same command `/run-plan` step 0 runs; paying for it here turns a two-refusal round
+trip into a one-line edit before anything is committed.
 
 Use a short uppercase ID prefix derived from the slug. Statuses used across the system: `todo` · `in-progress` · `blocked` · `done`. Match whatever the repo's existing plans already use if they differ.
 
@@ -228,6 +251,13 @@ For red-gated tasks, `Verify:` must be a **runnable command that names the check
 a test to be written. `/run-plan` executes exactly this command as the gate's preflight and
 postflight; a `Verify:` it cannot execute halts the plan at validation, before slice 1 runs.
 
+**One command, and hermetic.** `/run-plan` hands the `Verify:` string to `slice-gate.sh` as a
+single command, so two commands joined by "and" is not a verify — it is a string the gate cannot
+run. Neither is anything reaching outside the repo: a live clone, a running service, a network
+call. The gate runs the command twice, red then green, and a non-hermetic result is not
+attributable to the slice. Work that needs either goes on its own line in the plan — "manual smoke
+test after the plan lands" — never inside `Verify:`.
+
 When a red-gated slice is **hand-run** instead (no `/run-plan`), the execution session keeps
 the same discipline through the split: author the Check first, run it, state **"confirmed
 red"**, then do the Build.
@@ -247,6 +277,37 @@ Rationale (do not strip): independently-authored checks decorrelate spec-misread
 run catches vacuous tests; a runnable `Verify:` moves "confirmed red" from a self-report by the
 session being judged to an exit code observed by the orchestrator; this is deliberately NOT full
 TDD (no micro-cycles, no delete-premature-code rule) per the reasoning note.
+
+### Every slice in a `Check:` plan declares its lane
+
+A plan carrying the whole-tree `> Check:` header is a plan meant to be driven by `/run-plan`, and
+`/run-plan` step 0 requires **every open slice** to be one of two things: a Check/Build split with
+a runnable `Verify:`, or a slice whose task string **names an exemption**. A slice that is neither
+does not just fail itself — step 0 refuses before slice 1, so one unlaned slice at position 3
+blocks slices 1 and 2 as well.
+
+That is where the trigger above leaves a gap, and it is worth naming plainly rather than
+discovering at run time. The red-gate trigger reads the **slice's own** effort, so a `medium` slice
+in a `high` plan correctly gets no Check/Build split — and then gets refused by `/run-plan` for
+having none. Following this rule exactly is what produces the unrunnable plan; knowing the rule
+does not protect you.
+
+So in a `Check:`-carrying plan, a slice that ends up with no Check/Build split must **say why, in
+its task string**. Two honest ways out, in order of preference:
+
+1. **Give it the split anyway.** If the slice already knows what it will assert, it wants a split
+   and was simply written in the wrong shape. Raising a `medium` slice into a Check/Build pair is
+   not overkill — it is the shape the slice already had.
+2. **Name the exemption.** If there is genuinely nothing to red-test, write it into the task
+   string in the same voice as the category exemptions above:
+   `**Exemption: below the red-gate threshold (medium) — witness is the whole-tree Check: command.**`
+
+Never leave it implicit. `/run-plan` reads an unlaned slice as an authoring defect, which is what
+it is; a human reads it as a slice nobody thought about. Naming it makes the weaker gate a choice
+someone made, not an inference someone's tooling drew.
+
+This applies only to plans carrying a `> Check:` header. A hand-run plan without one is unaffected,
+and the graceful-degradation rule above still holds for legacy plans.
 
 ## Model & provider-aware Effort
 

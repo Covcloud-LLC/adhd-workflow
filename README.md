@@ -34,8 +34,9 @@ Use this if you:
 
 Do not use this if you want one prompt to fully autonomously design, implement, commit, push, and
 merge a feature. The one unattended lane is `/run-plan`, and it only runs *inside* an
-already-reasoned, already-promoted plan: it drives that plan's slices with no human between them,
-but it never pushes, never merges, and halts at the first red instead of trying again.
+already-reasoned, already-promoted plan: it drives that plan's slices with no human between them
+and, if they all go green, pushes the branch and opens a PR — but it stops there. It never merges,
+and it halts at the first red instead of trying again.
 
 ## The workflow triggers
 
@@ -44,7 +45,7 @@ but it never pushes, never merges, and halts at the first red instead of trying 
 | **Ideate** | `/idea` | Dumps a raw thought to disk and gets out of the way. | `docs/ideas/` |
 | **Reason** | `/reason` | Decides whether the idea is sound and how much thinking it needs. | a stamp on the idea |
 | **Plan** | `/promote` | Turns a reasoned idea into a runnable plan. Refuses vague ones. | `docs/plans/` |
-| **Execute** | *(fresh session)* or `/run-plan` | Runs the plan's task strings and builds the thing — by hand-off, or slice-by-slice under a scripted gate. | code |
+| **Execute** | *(fresh session)* or `/run-plan` | Runs the plan's task strings and builds the thing — by hand-off, or slice-by-slice under a scripted gate, then pushed as a PR. | code, PR |
 | **Validate** | `/wrap-up` / `$wrap-up` | Confirms it's done, captures what you learned, hands back to the driver. | plan status |
 
 Plus the supporting cast:
@@ -57,7 +58,11 @@ Plus the supporting cast:
   each slice still runs in a fresh execution session and must come back through `/wrap-up`
   before PJM continues to the next slice.
 - `/run-plan <plan>` — the hands-off version of that loop, for when the handoffs are pure
-  keystrokes. It drives a plan's open slices serially with no human between them. See below.
+  keystrokes. It drives a plan's open slices serially with no human between them, then pushes the
+  branch and opens a PR. See below.
+- `/ship` — commit, push, open a pull request, stop. It branches first if you're on `main`, runs
+  the repo's own check before committing, and never merges. Usable on its own for hand-written
+  work; `/run-plan` calls it to finish a clean run.
 - `/design-workshop` — builds a prompt for a separate "critic" session that attacks a hard
   problem before you commit to it. `/reason` calls this when an idea needs it.
 - `/audit-plans` — a weekly hygiene pass over the backlog.
@@ -97,8 +102,9 @@ execution session drift into the next task.
 not a model. `/run-plan` will drive a whole plan unattended, but only a plan that already passed
 `/reason` and `/promote`, only serially (parallel fan-out destroys the attribution that makes a
 red meaningful), and only while a script keeps exiting 0. The driving session holds no opinion
-about the work and never reads the diff. Pushes, merges, branch pruning, plan archival, and plan
-status changes still require you.
+about the work and never reads the diff. It will push a clean run's branch and open a PR on it,
+which is the one outward-facing act it takes and is suppressible with `--no-ship`. Merges, branch
+pruning, plan archival, and plan status changes still require you.
 
 **Compared with issue-tracker-first workflows:** the source of truth is the repo. Plans are
 Markdown files with `task:` strings and `Verify:` clauses, not tickets that need a bot to
@@ -203,11 +209,35 @@ What that buys you, and what it costs:
 - **Doc, example, and fixture slices run a weaker gate,** single-agent, witnessed only by the
   whole-tree check — and the stamp says `single-agent` so a reader three weeks later knows no
   independent check existed.
-- **It commits, and it never pushes.** Two commits per two-agent slice (check, then build plus the
-  stamped plan file) and one per single-agent slice, each tagged with the slice id. Resume reads
-  `git log`, not the ` ✅` markers.
+- **It commits per slice, and never pushes mid-run.** Two commits per two-agent slice (check, then
+  build plus the stamped plan file) and one per single-agent slice, each tagged with the slice id.
+  Resume reads `git log`, not the ` ✅` markers.
+- **One plan, one branch.** Before slice 1 it cuts `feat/<plan-slug>` off your default branch. If
+  you're standing on some *other* branch it refuses to start, because landing a plan on top of
+  unrelated work is a decision it shouldn't make for you — `--current-branch` says you meant it.
+  Resuming after a halt needs no flag: the branch already carries the plan's slice commits, which
+  is how the run recognises its own branch.
+- **On a clean completion it ships: push, PR, stop.** It hands off to `/ship` — push the branch,
+  open a pull request, never merge. Invoking `/run-plan` is the approval for that one push, and it
+  does not carry past the run. Pass `--no-ship` to suppress it and end with the commits sitting on
+  the branch. `--no-ship` does not turn off the branching — those are separate concerns. It skips
+  shipping entirely after a halt of either kind — nothing is finished, so there is nothing to open.
 - **It ends by invoking `/wrap-up` itself** — once per run, not per slice — so the run finishes by
   handing you the reconciliation seat with the report already on screen.
+
+On a clean completion, the last thing the run reports is a **quality-pass recommendation** — it
+recommends, it never runs it. In Claude Code: `/simplify <first-slice-sha>^..HEAD`, then re-run
+the plan's `> Check:` command, then `/code-review`. That order matters, because simplify rewrites
+and review reads, so reviewing first means reviewing code that is about to change. The range is
+required: the run committed every slice, so a bare `/simplify` looks at a clean working tree and
+reports the code is already fine. In Codex, the review half is the built-in `/review` (it takes
+`--base <branch>`, `--commit <sha>`, `--uncommitted`); there is no built-in simplifier, so ask for
+the cleanup as a plain prompt over the same commit range. On a surface with neither, the run stays
+quiet rather than printing a command you can't run.
+
+The PR is already open by then, on purpose: its first state is exactly the work the gate witnessed,
+so anything the quality pass changes lands as a follow-up commit a reviewer can tell apart. Push
+again once you've accepted those edits — `/ship` adds to the same PR rather than opening a second.
 
 Two requirements: the driving surface needs **real subagents** (Claude Code today, not Codex), and
 the repo needs a whole-tree check command that can exit non-zero. A repo with no check has no

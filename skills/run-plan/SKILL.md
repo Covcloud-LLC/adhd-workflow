@@ -1,6 +1,7 @@
 ---
 name: run-plan
-description: Serial plan orchestrator — drives a plan's open slices to completion with no human between slices. Two subagents per slice (one authors the check, one implements); slices whose task string names a red-gate exemption run single-agent, gated on the whole-tree check. The orchestrator alone runs the scripted verification gate (scripts/slice-gate.sh) and obeys its exit code without interpretation. Use when the user types /run-plan <plan>, or says "run this plan", "execute the plan", "drive this plan to done". Halts on any red or on a pre-build question from a subagent, never retries, resumes from git log, and invokes [[wrap-up]] when the run ends. Part of the ADHD project-workflow system (see [[pjm]], [[wrap-up]], [[standup]], [[promote]]).
+description: Serial plan orchestrator — drives a plan's open slices to completion with no human between slices. Two subagents per slice (one authors the check, one implements); slices whose task string names a red-gate exemption run single-agent, gated on the whole-tree check. The orchestrator alone runs the scripted verification gate (scripts/slice-gate.sh) and obeys its exit code without interpretation. Use when the user types /run-plan <plan>, or says "run this plan", "execute the plan", "drive this plan to done". Halts on any red or on a pre-build question from a subagent, never retries, resumes from git log. Cuts its own feature branch off the default branch and refuses to start on an unrelated branch unless --current-branch is passed. On a clean completion it ships — pushes the branch and opens a PR via [[ship]], never merging — unless --no-ship is passed; then it invokes [[wrap-up]]. Part of the ADHD project-workflow system (see [[pjm]], [[wrap-up]], [[standup]], [[promote]]).
+argument-hint: '<plan> [--current-branch] [--no-ship]'
 ---
 
 # Run a plan — serial, gated, unwitnessed by no one
@@ -56,6 +57,56 @@ any failure **name the offending slice (or header) and refuse to start**:
 6. Create a scratch directory OUTSIDE the repo (`mktemp -d`) for subagent reports. Reports never
    land in the tree — the tree belongs to the slices.
 
+## 0a · Branch discipline — cut off the default branch, or refuse
+
+**A run gets its own branch, cut from the default branch.** One plan, one branch, one PR. The
+decision happens **here**, before slice 1, while the tree is still clean and `git checkout -b`
+costs nothing and unwinds with `git checkout -` — because by the time the run ends, every slice
+has already committed to whatever branch HEAD was pointing at, and this skill never relocates
+landed commits.
+
+This is the one step outside section 0's list that can **refuse to start**, and unlike the rest of
+this skill it *acts* as well as checks.
+
+**Step 1 — name the default branch.** Try, in order, and stop at the first that answers:
+
+1. `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`
+2. `git symbolic-ref --short refs/remotes/origin/HEAD` (strip the `origin/` prefix)
+
+Never assume `main`. If neither answers — no `gh`, no remote, a repo that has never been pushed —
+you cannot enforce branch discipline, so **do not guess and do not refuse**: say plainly that the
+default branch could not be determined, that the run will proceed on the current branch, and that
+the ship phase will be skipped for the same reason. The user should learn the run won't produce a
+PR before it spends an hour, not after.
+
+**Step 2 — branch, or refuse.** With the default branch known:
+
+- **HEAD is the default branch** → `git checkout -b feat/<plan-slug>`, where `<plan-slug>` is the
+  plan's filename without `.md`. Name the new branch in the report. If that branch already exists,
+  **refuse**: the plan has been run before, and the right move is `git checkout feat/<plan-slug>`
+  and re-invoke, which resumes. Do not append a suffix and do not reuse the branch from `main` —
+  either would split one plan across two branches.
+- **HEAD is not the default branch, and the current branch already carries `<slice-id>:` commits
+  for this plan** → this *is* the plan's branch. Proceed, silently. This is the resume path
+  (section 4), and it is the common case after any halt: refusing here would make every halt
+  unresumable.
+- **HEAD is not the default branch, and there are no slice commits for this plan** → **refuse.**
+  Name the current branch, name the default branch, and give both ways forward: `git checkout
+  <default>` then re-invoke to get a fresh branch, or re-invoke with `--current-branch` to run
+  here deliberately. Do not switch branches for the user — landing a plan on a branch that already
+  holds unrelated work is a decision with consequences they can see and you cannot.
+- **`--current-branch` in `$ARGUMENTS`** → skip the refusal, run on whatever branch HEAD is, and
+  say which branch that was in the report. The flag suppresses the check; it does not suppress the
+  reporting.
+
+**Never** rename, reset, force, or switch branches — not here, not mid-run, not in the ship phase.
+The only branch operation this skill performs is a `git checkout -b` from a clean default branch.
+
+**`--no-ship` does not turn this off.** Branch discipline and shipping are separate concerns: a
+`--no-ship` run still gets its own branch, because committing nine slices onto the default branch
+is the thing worth avoiding whether or not a PR follows. `--no-ship` suppresses the push and the
+PR (section 4b), nothing else.
+
 ## 0b · Launch banner — informational only, not a gate
 
 If the plan carries a `## What this plan will actually do` section (the brief `/promote` writes
@@ -76,7 +127,8 @@ step cannot undo that.
 For each open slice, top to bottom, first pick its lane. **A slice whose task string names its
 exemption runs the single-agent lane** (section 1b) — `/promote` requires an exempt slice to say
 so in the task text ("Exempt from the Check/Build split…", "Exemption: example/fixture-authoring
-slice", "Doc slice (red-gate exempt)…"), so the task string is the detector; you do not judge
+slice", "Doc slice (red-gate exempt)…", "Exemption: below the red-gate threshold (medium)…"), so
+the task string is the detector; you do not judge
 whether a slice *deserves* the exemption, only whether it declares one. Everything else runs the
 two-agent loop below. A non-exempt slice with no Check/Build split never runs — that was refused
 at step 0.
@@ -122,9 +174,11 @@ at step 0.
 8. Next slice.
 
 Two commits per two-agent slice, one per single-agent slice — every commit tagged with the
-slice id. **Commit, never push, in the code repo** — a local commit is reversible; a push is
-not. The user pushes. (The one push exception is the docs-root metarepo: when the plan file
-lives there, its stamp writes follow the metarepo's own commit-and-push rule.)
+slice id. **Commit per slice; never push mid-run, in the code repo** — a local commit is
+reversible, so a halt at slice 4 leaves nothing outward-facing to retract. Pushing happens exactly
+once, after the last slice, in the ship phase (section 4b), and never after a halt. (The docs-root
+metarepo is a separate matter: when the plan file lives there, its stamp writes follow the
+metarepo's own commit-and-push rule, mid-run included.)
 
 ## 1b · The single-agent lane — exempt slices
 
@@ -173,7 +227,11 @@ task asked; the whole-tree green only proves it broke nothing.
   `/code-review`, or any equivalent agent yourself. A simplifier mutates the tree *after* the
   gate stamped it, which retroactively unmoors every ` ✅` from the sha it names; and acting on a
   review's findings is a model verdict you act on — the exact input this section already forbids.
-  You name the pass in the report and stop there.
+  You name the pass in the report and stop there. **The ship phase is not an exception to this**:
+  `/ship` forms no opinion about the diff and edits no file the gate stamped — it pushes commits
+  that already exist and creates a remote ref and a PR. Nothing under version control changes, so
+  no ` ✅` is unmoored. A model that *rewrites* the tree after the gate is still forbidden, and
+  that is the whole difference between shipping and simplifying.
 - **Model tier**: spawn every agent — A, B, or an exempt slice's single agent — at the slice's `Run at:` tier, falling back to the plan's
   `Default run tier:` header when the slice carries no `Run at:` line. The slice line always wins —
   over the plan default and over the plan's at-a-glance table. Legacy plans may carry the older
@@ -220,15 +278,73 @@ On re-invocation for the same plan:
   ` ✅` markers — the log is the in-flight state, the markers are the durable state. A slice with
   a landed build commit but no marker gets its marker re-stamped, not re-run. Resume at the
   first slice with no build commit.
+- **Resume on the plan's own branch, not a fresh one.** After a halt you are already standing on
+  the branch section 0a cut, and it carries this plan's `<slice-id>:` commits — that is exactly
+  the case 0a proceeds through without a flag. Do not switch to the default branch first and do
+  not pass `--current-branch`; just re-invoke. The slice commits on the branch are what identify
+  it as the plan's branch, which is why this works without any extra state to track.
 - Re-run step 0's validation in full before continuing.
+
+## 4b · Ship — push the branch and open the PR
+
+Runs after the last slice lands and **before** the report in section 5, so the report can name the
+PR.
+
+**Invoking `/run-plan` IS the push-and-PR approval**, the same way invoking `/ship` is. It covers
+this run only, it never extends to merging, and the standing no-auto-push rule resumes the moment
+the run ends.
+
+**Run it only on a clean completion with at least one slice stamped ` ✅` during this run.** Skip
+it — silently is wrong; say which reason applied — on every other outcome:
+
+- a red-gate halt or a question halt (nothing is finished; the next action is the fix)
+- a resume that found every slice already stamped (nothing changed, so there is nothing to open)
+- `--no-ship` in `$ARGUMENTS`
+- the current repo is the backlog metarepo (its own commit-and-push rule already handled the plan
+  file; there is no code branch to PR)
+- HEAD is the repo's default branch. Under section 0a this happens only two ways: the default
+  branch could not be determined, or `--current-branch` was passed while standing on it. Either
+  way, do **not** create a branch now and do **not** move the slice commits off it — relocating
+  landed commits is history rewriting, which this skill never does. Report it and stop.
+- this session has no `ship` skill
+
+**Invoke the `ship` skill; do not hand-roll `git push` and `gh pr create`.** `/ship` owns the
+guards — never merges, never force-pushes, never `git add -A`, never stages a file it did not
+touch, stops at the open PR. A second copy of those guards written here would drift out of sync
+with the first, and the copy that drifts is the one that force-pushes.
+
+Pass it a title drawn from **the plan, not the last commit**: the plan's title, and — if the plan
+carries the `## What this plan will actually do` brief — that brief as the PR body's "What". A run
+of nine slices is one change; titling it after slice 9 describes a fraction of it.
+
+Three facts about how `/ship` behaves here:
+
+- **The tree is already clean**, because every slice committed. `/ship` takes its "clean tree,
+  unpushed commits" path: push, then PR. Its commit step has nothing to do, which is normal.
+- **`/ship` re-runs the repo's check before pushing.** That is the same whole-tree `> Check:`
+  command the gate ran green at the last postflight, so it is a cheap re-confirmation, not a
+  second opinion — and it is not `--no-check`'d away. If it comes back red, `/ship` stops without
+  pushing: treat that as a halt under section 3 — report the command and its output, do not retry,
+  do not push around it.
+- **A PR may already be open**, on a resumed run whose earlier slices shipped. `/ship` pushes onto
+  it and reports the existing URL rather than opening a second. That is correct behaviour, not a
+  duplicate to clean up.
+
+**A ship-phase failure never unwinds the run.** The slices are committed and stamped; a rejected
+push, a `gh` auth error, or a red re-check changes nothing about what the gate witnessed. Report
+the error verbatim, say exactly where things stand (committed locally, not pushed), and leave it.
 
 ## 5 · Report
 
-When the run halts or completes, report: slices completed this run (id → build-commit sha),
+When the run halts or completes, report: **the branch the run landed on** — and whether section 0a
+cut it, resumed onto it, or was overridden with `--current-branch` — slices completed this run (id → build-commit sha),
 the halt if any — **labelled by kind**: a **red-gate halt** (slice id + failing command + exit
 code) or a **question halt** (slice id + the question file printed verbatim + the reminder that
 the answer is an edit to that slice's task string, then re-invoke `/run-plan`) — whole-tree
-check status, scratch-dir path, and the reminder that nothing was pushed. If every slice is now ` ✅`, recommend the plan's
+check status, scratch-dir path, and the **ship result** — the PR URL, or, when the ship phase was
+skipped, which of section 4b's reasons applied (`--no-ship`, a halt, nothing completed this run,
+the backlog metarepo, the default branch, no `ship` skill). "Skipped" without a reason reads as
+"pushed" to a tired reader. If every slice is now ` ✅`, recommend the plan's
 completion flip but do not perform it — that is `/wrap-up`'s call with the user present.
 
 Then, as the last reported item, the **quality-pass recommendation**: run
@@ -242,6 +358,11 @@ range: it already defaults to the committed branch diff. Say
 plainly that if the user accepts simplify's edits, each slice's ` ✅ (<command>, <sha_A>)`
 provenance becomes historical: the command named in the stamp went green against a tree that no
 longer exists — which is why the whole-tree check is re-run between the two.
+
+**The PR is already open by the time this is printed, and that ordering is deliberate.** Shipping
+first makes the PR's first state exactly the work the gate witnessed, commit for commit; simplify's
+edits then arrive as a follow-up commit a reviewer can tell apart from the gated work. Push again
+after accepting them — `/ship` will find the same PR and add to it.
 
 Emit it **only** on a clean completion where at least one slice completed during this run. Not on
 a red-gate halt, not on a question halt (nothing is finished; the next action is the fix, not a
@@ -266,3 +387,10 @@ reconciliation seat with the report already on screen, instead of leaving a chor
 The quality-pass recommendation belongs to §5's report and is delivered **before** `/wrap-up` is
 invoked; `/wrap-up` does not own it, is not changed by it, and keeps sole ownership of the
 closing next-action hand-off.
+
+The ship phase does not change `/wrap-up` either. `/wrap-up`'s rule that it must never merge or
+push silently, and must offer the step instead, stands exactly as written — it is a general rule
+for a skill a human usually invokes directly, and the ship phase is not `/wrap-up` doing the
+pushing. When `/wrap-up` runs after a ship, the PR is already open; it has nothing to offer there
+and should say so rather than offering a push that already happened. **`/wrap-up` still never
+merges, and neither does anything else in this run.**
