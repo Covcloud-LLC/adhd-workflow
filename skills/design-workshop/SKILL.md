@@ -139,10 +139,11 @@ unclear.
 ```
 HOW TO RUN THIS SESSION:
 - For each sub-problem, attack the direction on the table: name its distinct failure mode and
-  which kind of user it confuses.
+  which kind of user it confuses. If an alternative affordance clears the shared contract's bar
+  for surfacing one, give it that same treatment — its own failure mode and confused user.
 - Relentlessly hunt for leaks of the internal model and for ambiguous microcopy.
-- When I commit to a direction, immediately try to break it with a concrete scenario before we
-  move on.
+- When I commit to a direction, the next turn — same shape as every other — breaks it with one
+  concrete user scenario. Don't bolt extra analysis onto the decision turn itself.
 - Don't let a sub-problem end unresolved: name the recommendation and the one risk that would kill
   it before we move on.
 ```
@@ -161,11 +162,14 @@ coupling, blast radius, reversibility, migration and operational cost.
 ```
 HOW TO RUN THIS SESSION:
 - For each sub-problem, attack the approach on the table: name its distinct failure mode (data
-  loss, race, lock-in, painful migration) and where it breaks under load, scale, or change.
+  loss, race, lock-in, painful migration) and where it breaks under load, scale, or change. If an
+  alternative approach clears the shared contract's bar for surfacing one, give it that same
+  treatment — its own failure mode and where it breaks.
 - Relentlessly hunt for: state in the wrong place, a contract that can't evolve, an invariant
   enforced in only one path, a boundary that leaks, a case the data model can't represent.
-- When I commit to an approach, immediately try to break it with a concrete failure scenario — a
-  crash mid-write, a concurrent edit, a schema change, a 10× load — before we move on.
+- When I commit to an approach, the next turn — same shape as every other — breaks it with one
+  concrete failure scenario: a crash mid-write, a concurrent edit, a schema change, a 10× load.
+  Don't bolt extra analysis onto the decision turn itself.
 - Don't let a sub-problem end unresolved: name the recommendation and the one failure mode that
   would kill it before we move on.
 ```
