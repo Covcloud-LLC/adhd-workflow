@@ -5,7 +5,10 @@ implemented as a **script** rather than prose. One subagent per slice. The subag
 returns; it runs no checks, invokes no `/wrap-up`, and never touches the plan file. The
 **orchestrator** — which never reads the diff and has no stake in it — runs the gate itself, reads
 the exit code, commits, and appends ` ✅`. Any red, any missing check, any dirty tree, any "blocked":
-halt, leave everything in place, report. Never auto-retry. The user pushes.
+halt, leave everything in place, report. Never auto-retry. ~~The user pushes.~~ **Superseded
+2026-08-04** — the run now pushes and opens a PR itself on a clean completion, suppressible with
+`--no-ship`; see "Commit yes, push no" below for the reversal and its grounds. Everything else in
+this note stands.
 
 **Why:** The incumbent (`docs/notes/orchestrate-plan-slices-reasoning.md`) rejected autonomous
 execution on two grounds. **Role collapse is now genuinely dead** — Claude Code subagents *are*
@@ -143,6 +146,45 @@ would make every legacy plan fan out and shred itself. A `parallel-safe` marker 
   keeps its purpose — and it is *required*, not optional: in a shared tree with no commits, nine
   sequential slices produce **one diff**, and per-slice ` ✅` presumes a per-slice artifact that does
   not exist. Nine commits are far more unwindable than one dirty tree.
+
+  **Reversed 2026-08-04 — push yes, at end of run only.** The commit-per-slice half above is
+  untouched and still required; what changed is the "the user pushes" half. `/run-plan` now ends a
+  clean completion by invoking `/ship` — push the branch, open a PR, stop there — with `--no-ship`
+  to suppress it. The trigger was plain friction: the user was hand-running push + PR after every
+  single run, which is the "contributes keystrokes and no judgment" test this note already used to
+  justify automating the between-slice work. Three things make the reversal safe that were not true
+  in July:
+
+  1. **`/ship` now exists.** In July the alternative was the orchestrator hand-rolling `git push`
+     and `gh pr create`, with its own copy of the never-merge / never-force-push guards. `/ship`
+     owns those guards in one place, and `/run-plan` calls it rather than re-implementing them.
+  2. **The irreversibility argument was overstated for this specific act.** An unwanted PR is a
+     `gh pr close` and a branch delete. That is not the same class of harm as a force-push, a
+     merge, or a rewrite of shared history — all of which remain forbidden, in both skills. The
+     original bullet reasoned about "a push" in the abstract; the concrete act being automated is
+     "push a feature branch that did not exist before this run, and open a PR on it."
+  3. **The gate runs first.** By ship time every slice carries a ` ✅` earned from a process exit
+     code, and the whole-tree check is green — twice, since `/ship` re-runs it before pushing. What
+     gets pushed is verified work, not an unreviewed guess.
+
+  Two design details worth keeping: the branch is created **before slice 1**, while the tree is
+  still clean, because a run that commits nine slices onto `main` cannot be turned into a PR
+  afterwards without relocating commits — and this skill never rewrites history. Branch discipline
+  then hardened the same day: one plan, one branch cut from the default branch, and a **refusal**
+  when HEAD is some other branch, overridable with `--current-branch`. The refusal is the point —
+  a plan landing on top of unrelated work is a decision with consequences the user can see and the
+  orchestrator cannot, so it is exactly the kind of thing this skill hands back rather than
+  guesses at. Resume is carved out by evidence rather than by a flag or stored state: a branch
+  that already carries this plan's `<slice-id>:` commits *is* the plan's branch, so every halt
+  stays resumable with a bare re-invocation. And the PR opens
+  **before** the quality pass rather than after, so the PR's first state is exactly what the gate
+  witnessed and simplify's edits arrive as a distinguishable follow-up commit. That ordering also
+  keeps the "recommend the quality pass, never run it" invariant completely untouched
+  (`plans/_done/code-review-after-run-plan.md` in the backlog metarepo, 2026-08-01): shipping
+  mutates no file the gate stamped, so it is not the thing that decision prohibited.
+
+  **Not reversed:** the runner still never merges, never force-pushes, never pushes mid-run, and
+  never pushes at all after a halt of either kind.
 - **Git log is the in-flight state; the plan file is the durable state.** Tree and marker cannot be
   updated atomically (dual write). Work-then-mark loses a slice to a crash; mark-then-work leaves a
   silent hole. Commit-per-slice makes the commit the record: on resume, the last commit is the last

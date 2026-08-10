@@ -16,7 +16,7 @@ slices done, with its test suite in `tests/gate_test.sh`. There is still no buil
 check is `bash scripts/check.sh`.
 
 ```
-skills/<name>/SKILL.md   the 13 skills — this is the product
+skills/<name>/SKILL.md   the 14 skills — this is the product
 install.sh               symlinks skills into ~/.codex
 scripts/slice-gate.sh    the slice gate — see docs/notes/slice-gate-convention.md
 scripts/check.sh         the whole-tree check: shell syntax + the gate's tests
