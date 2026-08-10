@@ -80,11 +80,14 @@ this rule exists to prevent.
 
 Write the message yourself from the actual diff — a summary line under ~70 chars in the
 imperative ("Add X", not "Added X"), then a blank line, then a short body only if the *why* isn't
-obvious from the diff. End with the trailer:
+obvious from the diff. End with whatever `Co-Authored-By:` trailer your harness's own commit rule
+specifies, naming the model actually running — in Claude Code that is:
 
 ```
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Co-Authored-By: Claude <model> <noreply@anthropic.com>
 ```
+
+Don't copy a model name out of this file; it will be stale by the time you read it.
 
 If the branch already has commits and the tree is clean, skip this step — there is nothing to
 commit, and that is a normal state, not a problem.
@@ -101,8 +104,10 @@ being asked.
 
 ## Step 5: Open the PR
 
-Title: `$ARGUMENTS` if the user gave one, otherwise the commit summary line. For a branch with
-several commits, write a title that covers all of them rather than echoing the last one.
+Title: the **non-flag part** of `$ARGUMENTS` if the user gave one, otherwise the commit summary
+line. Strip `--draft` and `--no-check` first — arguments that are nothing but flags mean **no
+title was provided**, not a PR called `--no-check`. For a branch with several commits, write a
+title that covers all of them rather than echoing the last one.
 
 Body — short, and about the change, not about the process:
 

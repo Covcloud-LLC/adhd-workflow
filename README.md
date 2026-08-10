@@ -60,9 +60,9 @@ Plus the supporting cast:
 - `/run-plan <plan>` — the hands-off version of that loop, for when the handoffs are pure
   keystrokes. It drives a plan's open slices serially with no human between them, then pushes the
   branch and opens a PR. See below.
-- `/ship` — commit, push, open a pull request, stop. It branches first if you're on `main`, runs
-  the repo's own check before committing, and never merges. Usable on its own for hand-written
-  work; `/run-plan` calls it to finish a clean run.
+- `/ship` — commit, push, open a pull request, stop. It branches first if you're on the default
+  branch, runs the repo's own check before committing, and never merges. Usable on its own for
+  hand-written work; `/run-plan` calls it to finish a clean run.
 - `/design-workshop` — builds a prompt for a separate "critic" session that attacks a hard
   problem before you commit to it. `/reason` calls this when an idea needs it.
 - `/audit-plans` — a weekly hygiene pass over the backlog.

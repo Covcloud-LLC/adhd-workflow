@@ -302,10 +302,14 @@ it — silently is wrong; say which reason applied — on every other outcome:
 - `--no-ship` in `$ARGUMENTS`
 - the current repo is the backlog metarepo (its own commit-and-push rule already handled the plan
   file; there is no code branch to PR)
-- HEAD is the repo's default branch. Under section 0a this happens only two ways: the default
-  branch could not be determined, or `--current-branch` was passed while standing on it. Either
-  way, do **not** create a branch now and do **not** move the slice commits off it — relocating
-  landed commits is history rewriting, which this skill never does. Report it and stop.
+- the default branch could not be determined (section 0a step 1). Section 0a already told the user
+  the ship phase would be skipped for this reason; say it again here rather than leaving it
+  implied. Without a known default branch there is no way to tell whether HEAD is on it, so this
+  reason is checked **before** the one below and replaces it.
+- HEAD is the repo's default branch — which, with the default branch known, means
+  `--current-branch` was passed while standing on it. Do **not** create a branch now and do
+  **not** move the slice commits off it: relocating landed commits is history rewriting, which
+  this skill never does. Report it and stop.
 - this session has no `ship` skill
 
 **Invoke the `ship` skill; do not hand-roll `git push` and `gh pr create`.** `/ship` owns the
@@ -343,7 +347,8 @@ code) or a **question halt** (slice id + the question file printed verbatim + th
 the answer is an edit to that slice's task string, then re-invoke `/run-plan`) — whole-tree
 check status, scratch-dir path, and the **ship result** — the PR URL, or, when the ship phase was
 skipped, which of section 4b's reasons applied (`--no-ship`, a halt, nothing completed this run,
-the backlog metarepo, the default branch, no `ship` skill). "Skipped" without a reason reads as
+the backlog metarepo, an undeterminable default branch, HEAD on the default branch, no `ship`
+skill). "Skipped" without a reason reads as
 "pushed" to a tired reader. If every slice is now ` ✅`, recommend the plan's
 completion flip but do not perform it — that is `/wrap-up`'s call with the user present.
 
