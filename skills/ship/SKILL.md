@@ -120,11 +120,18 @@ Body — short, and about the change, not about the process:
 
 <the check command and its result, or "no check found in this repo">
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
+<the PR-body attribution line your harness's own rule specifies, if it has one>
 ```
 
+Same rule as the commit trailer in Step 3: name the surface actually running. In Claude Code that
+line is `🤖 Generated with [Claude Code](https://claude.com/claude-code)`; under Codex or any other
+surface it is theirs, or absent. Don't paste Claude's line from a session that isn't Claude's.
+
+Pass the body on **stdin**, never as a `--body` argument — it is multi-line Markdown and will
+contain quotes and backticks sooner or later, and `--body "<body>"` breaks on exactly that:
+
 ```bash
-gh pr create --title "<title>" --body "<body>"    # add --draft when $ARGUMENTS has it
+gh pr create --title "<title>" --body-file -    # add --draft when $ARGUMENTS has it
 ```
 
 If `gh` reports no remote, no upstream repo, or missing auth, stop and report the exact error —
