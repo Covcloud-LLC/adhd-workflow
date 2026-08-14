@@ -54,9 +54,6 @@ Plus the supporting cast:
   flight at once, flags plans that have gone stale.
 - `/pjm` — a project-manager session you keep open for a work block. It drives and tracks; it
   never builds. It hands you task strings to paste into fresh Codex or Claude Code sessions.
-  `/pjm run-plan <plan>` can drive one plan slice-by-slice through checkpointed handoffs, but
-  each slice still runs in a fresh execution session and must come back through `/wrap-up`
-  before PJM continues to the next slice.
 - `/run-plan <plan>` — the hands-off version of that loop, for when the handoffs are pure
   keystrokes. It drives a plan's open slices serially with no human between them, then pushes the
   branch and opens a PR. See below.
@@ -162,7 +159,7 @@ Start small:
 6. Run the task in a fresh agent session.
 7. Finish with `/wrap-up`.
 
-After that loop feels natural, add `/pjm run-plan <plan>` for longer plans, `/defect` and
+After that loop feels natural, add `/run-plan <plan>` for longer plans, `/defect` and
 `/diagnose` for bugs, and `/audit-plans` as a weekly hygiene pass.
 
 Reach for `/run-plan <plan>` once you notice you're approving every checkpoint without changing
@@ -171,8 +168,8 @@ you'd be happy to `git reset --hard`.
 
 ## Running a plan unattended: `/run-plan`
 
-`/pjm run-plan <plan>` stops between every slice to hand you a task string. When your answer at
-that checkpoint is always "yes, next," the checkpoint is costing keystrokes and buying nothing.
+Handing off one task string at a time and waiting for you to say "yes, next" at every slice is
+fine for one slice. For a whole plan it's pure keystroke tax once your answer never changes.
 `/run-plan <plan>` removes it: it drives every open slice of one plan, serially, in plan order,
 with no human in between.
 

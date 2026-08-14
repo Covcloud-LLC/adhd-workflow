@@ -36,9 +36,6 @@ Two helper triggers sit alongside these:
   things in flight at once.
 - `/pjm` — a project-manager session you keep open for a work block. It drives and tracks; it
   never builds. It hands you task strings to run in fresh Codex or Claude Code sessions.
-  `/pjm run-plan <plan>` can drive one plan slice-by-slice through checkpointed handoffs, but
-  each slice still runs in a fresh execution session and must come back through `/wrap-up`
-  before PJM continues to the next slice.
 - `/design-workshop` — builds a prompt for a separate "critic" session that attacks a hard
   problem before you commit to it. `/reason` calls this when an idea needs it.
 
@@ -198,9 +195,8 @@ build.
 - `/pjm` is a project-manager session you keep open for the day. It re-checks the state every
   turn (you move things between turns), runs the standup pick, puts the task string on your
   clipboard, and tells you which provider route, model, and effort to run it at. It manages; it
-  doesn't build. `/pjm run-plan <plan>` can keep the same plan moving slice-by-slice, but only
-  by stopping at each checkpoint: hand off the next slice, wait for a fresh execution session,
-  then require `/wrap-up` after that slice before the next slice is assigned.
+  doesn't build. `/run-plan <plan>` is the autonomous runner: it drives the same plan through all
+  its open slices, serially, with no human between them, then pushes the branch and opens a PR.
 
 When a run finishes clean, that only proves the tree is green — not that the code is good. So a
 run that actually landed a slice ends by recommending a quality pass, not by doing one: tidy the
@@ -241,8 +237,7 @@ invokes the installed skill. It:
 3. Asks whether the finished work deserves a shipped doc (see **Documents** below) — and if
    the session changed code with no plan or defect behind it, offers a retroactive `/defect`
    or `/idea` so the work still leaves a trace.
-4. Hands control back to `/pjm`; if the slice came from `/pjm run-plan <plan>`, return to that
-   same PJM session before the next slice is assigned.
+4. Hands control back to `/pjm` for the next action.
 5. Nudges `/audit-plans` only if the backlog looks messy.
 
 `/verify` is the sharper tool underneath: it actually drives the feature end-to-end to confirm the
