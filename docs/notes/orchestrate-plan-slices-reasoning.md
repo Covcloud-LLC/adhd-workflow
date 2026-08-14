@@ -1,5 +1,17 @@
 # Orchestrate Plan Slices - reasoning
 
+> **Superseded 2026-08-14.** The decision below — a checkpointed orchestration mode around
+> `/pjm` — was correct on 2026-07-09 given its stated premise: that Codex/Claude Code couldn't
+> safely spawn and supervise independent execution sessions, so the loop had to stop at every
+> slice and wait for a human-verified handoff. That same day, `/run-plan` shipped a machine
+> witness (the slice gate, `scripts/slice-gate.sh`) that lets an orchestrator drive every open
+> slice with no human between them and still prove each one is done for the right reason —
+> falsifying the premise this note was built on. `/pjm run-plan <plan>` was retired on
+> 2026-08-14. See `notes/retire-pjm-run-plan-mode-reasoning.md` in the adhd-workflow backlog
+> root for the retirement decision. This note and the archived plan
+> (`plans/_done/orchestrate-plan-slices.md`) stay as the record of what was decided and why, at
+> the time.
+
 **Decision:** Build this as a checkpointed orchestration mode around `/pjm` rather than as a fully autonomous executor. The useful thing is not "do every slice without the user"; it is "keep choosing the next slice, preparing the right handoff, waiting for verified completion, reconciling status through `/wrap-up`, and then continuing." The first implementation should probably be `/pjm run-plan <plan>` or a thin `orchestrate-plan` skill that explicitly delegates to `/pjm`, `/standup`, and `/wrap-up`.
 **Why:** `/pjm` already owns the driver seat: re-sweeping state, choosing the nearest finish line, copying task strings, advising model/effort, and offering branch/worktree setup. A parallel command that bypasses those rules would duplicate the workflow's most load-bearing guardrails.
 

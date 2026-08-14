@@ -216,13 +216,10 @@ here.** A wrap-up in an execution session that also names the next action compet
 drive — the exact re-decision tax the system fights — and tempts this session into *starting* the
 next slice, breaking the execute-elsewhere separation.
 
-If this slice came from **`/pjm run-plan <plan>`**, end by telling the user: reconcile + capture
-done — return to that same `/pjm` session and continue the same plan-run loop for `<plan>`. Do
-not start a fresh PJM session, do not let wrap-up pick the next slice, and do not ask the user to
-run a plain "what's next?" standup-style decision.
-
-Otherwise, end by telling the user: reconcile + capture done — switch to your `/pjm` session and
-ask "what's next?".
+There is **one** hand-off, and it reads the same whether the slice was hand-run or driven by
+`/run-plan`: end by telling the user that reconcile + capture are done, and to switch to their
+`/pjm` session and ask "what's next?". Do not let wrap-up pick the next slice, and do not ask the
+user to run a plain "what's next?" standup-style decision here.
 
 **Fallback:** if the user says they're not running a `/pjm` session, invoke the **`standup`**
 skill here instead — it owns the `▶ NEXT` line (paste-ready `task:` string + default route,
@@ -248,8 +245,8 @@ recommended it.
   say which repo held the note — and if it was the metarepo, that the delete is already committed
   and pushed there, plus any code-repo citation fix left **uncommitted** for the user. Omit the
   line when the plan named no note or no plan completed.
-- The next-action hand-off: point the user to their `/pjm` session; if the slice came from
-  `/pjm run-plan <plan>`, explicitly tell them to return to that same session and continue the
-  same plan-run loop for `<plan>` (or, in the fallback case, the `▶ NEXT` line from standup,
-  including the OpenAI route, Claude route, and chosen default when the plan carries them).
+- The next-action hand-off: point the user to their `/pjm` session and ask "what's next?" there —
+  the same single line for a hand-run slice and a machine-driven one (or, in the fallback case,
+  the `▶ NEXT` line from standup, including the OpenAI route, Claude route, and chosen default
+  when the plan carries them).
 - The audit-plans nudge, if triggered.
