@@ -11,12 +11,12 @@ installed package is Codex-native, but live workflow prose should make execution
 between Codex/OpenAI and Claude Code when both routes are relevant.
 
 The "product" is the prose inside `skills/*/SKILL.md`. The repo also carries one piece of real
-code: the **slice gate** (`scripts/slice-gate.sh`), the machine witness `/run-plan` uses to mark
+code: the **slice gate** (`scripts/slice-gate.sh`), the machine witness a workflow run uses to mark
 slices done, with its test suite in `tests/gate_test.sh`. There is still no build; the whole-tree
 check is `bash scripts/check.sh`.
 
 ```
-skills/<name>/SKILL.md   the 14 skills — this is the product
+skills/<name>/SKILL.md   the 13 skills — this is the product
 install.sh               symlinks skills into ~/.codex
 scripts/slice-gate.sh    the slice gate — see docs/notes/slice-gate-convention.md
 scripts/check.sh         the whole-tree check: shell syntax + the gate's tests
@@ -71,12 +71,12 @@ Changing any of these means changing several skills at once:
 |---|---|---|---|
 | `reasoned:` frontmatter stamp on an idea | passed the reasoning gate | `/reason` | `/promote` |
 | trailing ` ✅` on a `### <id>` slice heading | that slice is done | `/wrap-up` | `/standup` |
-| `> Default run tier:` header on a plan | both provider routes + effort, for slices with no override | `/promote` | `/standup`, `/pjm`, `/audit-plans`, `/run-plan` |
-| `> Run at:` line on a slice | the tier that slice runs at; always beats the plan default | `/promote` | `/standup`, `/run-plan` |
+| `> Default run tier:` header on a plan | both provider routes + effort, for slices with no override | `/promote` | `/standup`, `/pjm`, `/audit-plans` |
+| `> Run at:` line on a slice | the tier that slice runs at; always beats the plan default | `/promote` | `/standup`, `/pjm` |
 | WIP cap of 2 `in-progress` plans | the finish-what-you-start rule | — | `/standup` (the only place a plan goes `in-progress`) |
 | `docs/plans/_done/` | completed plans are archived, never deleted | `/wrap-up` | `/audit-plans` |
-| the slice gate — `scripts/slice-gate.sh` | the five machine facts behind a machine-written ` ✅`; see `docs/notes/slice-gate-convention.md` | orchestrator only (never a subagent) | `/run-plan`, `/wrap-up` |
-| `## What this plan will actually do` + `## Decisions this plan makes` sections, read back before write | the plan's brief and the decisions the decomposition added | `/promote` | `/audit-plans` (flag + drift spot-check), `/run-plan` (launch echo) |
+| the slice gate — `scripts/slice-gate.sh` | the five machine facts behind a machine-written ` ✅`; see `docs/notes/slice-gate-convention.md` | a verify agent in a workflow run (never the check author or implementer) | the session that launched the run, `/wrap-up` |
+| `## What this plan will actually do` + `## Decisions this plan makes` sections, read back before write | the plan's brief and the decisions the decomposition added | `/promote` | `/audit-plans` (flag + drift spot-check) |
 
 The legacy four-line `Model:`/`OpenAI:`/`Claude:`/`Recommended:` header is **readable but
 deprecated** — `/promote` must never emit it, and `/audit-plans` flags it for migration.
@@ -96,8 +96,10 @@ design/decision/reference docs stay in this repo's `docs/notes/`, and that folde
 worked example readers learn from — so it should stay well-formed.
 
 The nine reasoning notes that existed before this convention were not bulk-migrated. Eight of them
-stay in this repo's `docs/notes/` alongside `slice-gate-convention.md`; the ninth — this plan's own
-reasoning note — moved to the metarepo as the first live example.
+stayed in this repo's `docs/notes/` alongside `slice-gate-convention.md`; the ninth — this plan's own
+reasoning note — moved to the metarepo as the first live example. Three of the eight were deleted on
+2026-09-16 when the plan-runner skill was retired (their content now lives in `slice-gate-convention.md` or
+nowhere live); five remain.
 
 Consequence: if you are looking for a plan, idea, or reasoning note for this repo and it isn't
 under `docs/`, that is expected, not a missing file. Resolve the docs root the way the skills do (read

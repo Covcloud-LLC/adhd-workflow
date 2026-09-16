@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # slice-gate.sh — the machine witness for a slice.
 #
-# Run by the orchestrator, never by a subagent. Decides by exit code alone; no
-# model is in the decision path. It reads, it runs commands, it reports. It does
-# not commit, does not retry, and does not modify the tree.
+# Run by the orchestrator's verify step — never by the agent that wrote the
+# check or the code. Decides by exit code alone; no model is in the decision
+# path. It reads, it runs commands, it reports. It does not commit, does not
+# retry, and does not modify the tree.
 #
 #   slice-gate.sh preflight  <check-cmd> <check-paths...>
 #       0  genuine red: every check path exists and is non-empty, and the

@@ -1,6 +1,6 @@
 ---
 name: ship
-description: Commit the current work, push the branch, and open a pull request — one command for the whole hand-off. Branches first if you're on the default branch, runs the repo's own check before committing, and stops at the open PR without merging. Use when the user types /ship, or says "commit push and raise a PR", "ship this", "open a PR for this", "put this up for review". Part of the ADHD project-workflow system — [[run-plan]] invokes it to finish a clean run.
+description: Commit the current work, push the branch, and open a pull request — one command for the whole hand-off. Branches first if you're on the default branch, runs the repo's own check before committing, and stops at the open PR without merging. Use when the user types /ship, or says "commit push and raise a PR", "ship this", "open a PR for this", "put this up for review". Part of the ADHD project-workflow system.
 argument-hint: '[PR title or short description] [--draft] [--no-check]'
 ---
 

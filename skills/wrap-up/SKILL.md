@@ -11,10 +11,10 @@ five: reconcile plan status → capture knowledge → queue shipped-doc work →
 action to the `/pjm` session → nudge weekly hygiene only when it's actually needed.
 
 This normally runs in an **execution session** (the one that just ran the slice), where the
-just-finished work and its learnings are fresh. `/run-plan` also invokes this skill itself when
-a run ends (clean or halted) — machine invocation changes **nothing** below: every
-confirm-before-writing rule holds, and there is no machine-confirm mode (the slice-gate
-convention says why there never will be). The "what's next" decision is NOT wrap-up's job
+just-finished work and its learnings are fresh. It also runs after a **workflow run** (a
+Claude Code Workflow script or Codex subagents driving a plan's slices) — that changes
+**nothing** below: every confirm-before-writing rule holds, and there is no machine-confirm mode
+(the slice-gate convention says why there never will be). The "what's next" decision is NOT wrap-up's job
 in the current model — the long-running `/pjm` session owns it (see step 5).
 
 **Cardinal rule: never flip a status silently.** Recommend the change, then act on the user's
@@ -45,8 +45,8 @@ Everywhere below, `docs/ideas/`, `docs/plans/`, `docs/defects/`, and `docs/BOARD
   standup will re-offer the slice you just finished.
 - **The slice gate** (the convention in the workflow repo's own `./docs/notes/slice-gate-convention.md`
   — a durable note, which stays in the code repo whether or not a metarepo is configured)
-  is the other legitimate writer of this marker: `/run-plan`'s orchestrator stamps a slice
-  ` ✅ (<command>, <sha>)` only after the gate's five machine facts pass, or
+  is the other legitimate writer of this marker: the session that launched a gated workflow run
+  stamps a slice ` ✅ (<command>, <sha>)`, from the run's returned results, only after the gate's five machine facts pass, or
   ` ✅ (<command>, single-agent)` for a red-gate-exempt slice witnessed by the whole-tree check
   alone (the weaker of the two — the provenance says which). A slice arriving with a
   provenance-stamped marker is already done — reconcile around it, don't re-confirm it. For
@@ -216,8 +216,8 @@ here.** A wrap-up in an execution session that also names the next action compet
 drive — the exact re-decision tax the system fights — and tempts this session into *starting* the
 next slice, breaking the execute-elsewhere separation.
 
-There is **one** hand-off, and it reads the same whether the slice was hand-run or driven by
-`/run-plan`: end by telling the user that reconcile + capture are done, and to switch to their
+There is **one** hand-off, and it reads the same whether the slice was hand-run or driven by a
+workflow run: end by telling the user that reconcile + capture are done, and to switch to their
 `/pjm` session and ask "what's next?". Do not let wrap-up pick the next slice, and do not ask the
 user to run a plain "what's next?" standup-style decision here.
 

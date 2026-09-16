@@ -18,8 +18,8 @@ ideate  →  reason  →  plan  →  execute  →  validate
  /idea     /reason   /promote   (fresh      /wrap-up
                                  sessions,
                                  driven by
-                                 /pjm — or
-                                 /run-plan)
+                                 /pjm — or a
+                                 workflow run)
 ```
 
 ## Who this is for
@@ -33,10 +33,10 @@ Use this if you:
 - prefer lightweight Markdown artifacts in the repo over a separate project-management app.
 
 Do not use this if you want one prompt to fully autonomously design, implement, commit, push, and
-merge a feature. The one unattended lane is `/run-plan`, and it only runs *inside* an
-already-reasoned, already-promoted plan: it drives that plan's slices with no human between them
-and, if they all go green, pushes the branch and opens a PR — but it stops there. It never merges,
-and it halts at the first red instead of trying again.
+merge a feature. The one unattended lane is a **workflow run** — your agent tool's native
+orchestration (in Claude Code, the Workflow tool) driving an already-reasoned, already-promoted
+plan's slices with no human between them. The workflow repo supplies the gate it runs, not the
+loop. It halts at the first red instead of trying again, and merging stays yours.
 
 ## The workflow triggers
 
@@ -45,7 +45,7 @@ and it halts at the first red instead of trying again.
 | **Ideate** | `/idea` | Dumps a raw thought to disk and gets out of the way. | `docs/ideas/` |
 | **Reason** | `/reason` | Decides whether the idea is sound and how much thinking it needs. | a stamp on the idea |
 | **Plan** | `/promote` | Turns a reasoned idea into a runnable plan. Refuses vague ones. | `docs/plans/` |
-| **Execute** | *(fresh session)* or `/run-plan` | Runs the plan's task strings and builds the thing — by hand-off, or slice-by-slice under a scripted gate, then pushed as a PR. | code, PR |
+| **Execute** | *(fresh session)* or "use a workflow" | Runs the plan's task strings and builds the thing — by hand-off, or slice-by-slice through native orchestration under a scripted gate. | code, PR |
 | **Validate** | `/wrap-up` / `$wrap-up` | Confirms it's done, captures what you learned, hands back to the driver. | plan status |
 
 Plus the supporting cast:
@@ -54,12 +54,9 @@ Plus the supporting cast:
   flight at once, flags plans that have gone stale.
 - `/pjm` — a project-manager session you keep open for a work block. It drives and tracks; it
   never builds. It hands you task strings to paste into fresh Codex or Claude Code sessions.
-- `/run-plan <plan>` — the hands-off version of that loop, for when the handoffs are pure
-  keystrokes. It drives a plan's open slices serially with no human between them, then pushes the
-  branch and opens a PR. See below.
 - `/ship` — commit, push, open a pull request, stop. It branches first if you're on the default
   branch, runs the repo's own check before committing, and never merges. Usable on its own for
-  hand-written work; `/run-plan` calls it to finish a clean run.
+  hand-written work, or after a workflow run finishes.
 - `/design-workshop` — builds a prompt for a separate "critic" session that attacks a hard
   problem before you commit to it. `/reason` calls this when an idea needs it.
 - `/audit-plans` — a weekly hygiene pass over the backlog.
@@ -96,12 +93,11 @@ reconciles slice status, captures knowledge, and returns control to `/pjm` inste
 execution session drift into the next task.
 
 **Compared with autonomous multi-agent systems:** the automation is narrow and the verification is
-not a model. `/run-plan` will drive a whole plan unattended, but only a plan that already passed
-`/reason` and `/promote`, only serially (parallel fan-out destroys the attribution that makes a
-red meaningful), and only while a script keeps exiting 0. The driving session holds no opinion
-about the work and never reads the diff. It will push a clean run's branch and open a PR on it,
-which is the one outward-facing act it takes and is suppressible with `--no-ship`. Merges, branch
-pruning, plan archival, and plan status changes still require you.
+not a model. A workflow run will drive a whole plan unattended, but only a plan that already
+passed `/reason` and `/promote`, only serially for gated slices (parallel fan-out destroys the
+attribution that makes a red meaningful), and only while the slice gate keeps exiting 0. The loop
+itself is code the agent harness executes, not prose a model tries to follow. Pushing, merges,
+branch pruning, plan archival, and plan status changes still require you.
 
 **Compared with issue-tracker-first workflows:** the source of truth is the repo. Plans are
 Markdown files with `task:` strings and `Verify:` clauses, not tickets that need a bot to
@@ -128,9 +124,9 @@ start a new session, then type `/idea` or explicitly invoke `$idea` in any proje
 Use `--force` to replace files already at those paths (they get backed up to `<name>.bak`), and
 `--uninstall` to remove the symlinks.
 
-Keep the clone where it is. `/run-plan` resolves `scripts/slice-gate.sh` by following its own
-skill symlink back into this repo, so moving or deleting the clone leaves that skill without its
-gate — and it refuses to run rather than falling back to judgment.
+Keep the clone where it is. A workflow run finds `scripts/slice-gate.sh` by following an
+installed skill's symlink back into this repo, so moving or deleting the clone leaves runs
+without their gate.
 
 The installer also links everything in `output-styles/` into
 `${CODEX_HOME:-~/.codex}/output-styles/`. Those are **Claude Code only** — output styles have no
@@ -159,85 +155,50 @@ Start small:
 6. Run the task in a fresh agent session.
 7. Finish with `/wrap-up`.
 
-After that loop feels natural, add `/run-plan <plan>` for longer plans, `/defect` and
-`/diagnose` for bugs, and `/audit-plans` as a weekly hygiene pass.
+After that loop feels natural, add a workflow run for longer plans, `/defect` and `/diagnose`
+for bugs, and `/audit-plans` as a weekly hygiene pass.
 
-Reach for `/run-plan <plan>` once you notice you're approving every checkpoint without changing
+Reach for a workflow run once you notice you're approving every checkpoint without changing
 anything — that's the signal the checkpoint is no longer earning its keep. Try it first on a plan
 you'd be happy to `git reset --hard`.
 
-## Running a plan unattended: `/run-plan`
+## Running a plan unattended: native orchestration
 
 Handing off one task string at a time and waiting for you to say "yes, next" at every slice is
-fine for one slice. For a whole plan it's pure keystroke tax once your answer never changes.
-`/run-plan <plan>` removes it: it drives every open slice of one plan, serially, in plan order,
-with no human in between.
+fine for one slice. For a whole plan it's pure keystroke tax once your answer never changes. This
+repo doesn't ship its own runner for that. Use your agent tool's native orchestration:
 
-The session that drives the run is an **orchestrator**, not a reviewer. Per slice it spawns two
-subagents — **A** gets only the slice's `Check:` text and writes the failing check; **B** gets only
-the `Build:` text and implements until it passes. Neither one commits, reads the plan file, or runs
-the gate. The orchestrator reads *nothing* either subagent says; each subagent's narrative goes to a
-scratch dir outside the repo.
+1. **Claude Code — the Workflow tool.** Say "use a workflow to run plan `<plan>`". The session
+   writes a Workflow script from the plan's `### <id>` slices and their `task:` strings. The
+   harness executes that script as code, so the loop — slice order, halt on red, never retry —
+   doesn't drift the way a model following prose does. Resume a halted run by its run ID.
+2. **Codex — its native subagent feature**, where your Codex build has one.
+3. **Anywhere else — paste task strings** into fresh sessions, one slice at a time, with `/pjm` or
+   `/standup` handing you the next one.
 
-What it acts on instead is a script — `scripts/slice-gate.sh` — and its exit code. A slice earns
-its ` ✅` only after five machine-observed facts, in order:
+What this repo supplies is the **slice gate**: `scripts/slice-gate.sh` and its contract in
+[`docs/notes/slice-gate-convention.md`](docs/notes/slice-gate-convention.md). Per gated slice, agent
+**A** writes the failing check from the slice's `Check:` text, agent **B** implements from the
+`Build:` text, and a separate verify agent runs the gate and returns its exit code for the script
+to branch on. A slice earns its ` ✅` only after five facts, in order:
 
 1. **Preflight red** — A's fresh check fails, and fails by assertion, not by failing to run.
-2. **Agent B implements** — a separate session, given only the Build text.
+2. **Agent B implements** — a separate agent, given only the Build text.
 3. **Postflight green** — the same check now passes.
 4. **Whole-tree green** — the repo's own check command passes.
 5. **Check untouched** — A's files are unchanged since A committed them, additions included.
 
-The reasoning is in [`docs/notes/slice-gate-convention.md`](docs/notes/slice-gate-convention.md):
-a prose gate is a suggestion made to something that wants to agree with you, so the gate is a
-process exit code and no model sits in the decision path.
+A prose gate is a suggestion made to something that wants to agree with you, so the gate is a
+process exit code. Doc, example, and fixture slices that name an exemption run a weaker lane,
+witnessed only by the whole-tree check, and their stamp says `single-agent`. Gated slices of one
+plan run one at a time in one tree: a whole-tree check only blames the slice that broke it when
+nothing else changed at the same time.
 
-What that buys you, and what it costs:
+When the run finishes, the rest is yours: `/ship` to push and open a PR, then a quality pass —
+`/simplify <first-slice-sha>^..HEAD`, re-run the plan's `> Check:` command, then `/code-review`
+(simplify rewrites and review reads, so review last). Then `/wrap-up`.
 
-- **It halts, it never retries.** Any red, any harness error, any missing check: stop, leave the
-  tree exactly as it is, report the slice id, the failing command, its exit code, and the scratch
-  paths. A flaky-looking red is still a red — retrying would be interpretation.
-- **It refuses before slice 1, not at slice 4.** No whole-tree `> Check:` header, a red or
-  unrunnable baseline, a dirty working tree, or an open slice with neither a `Check:`/`Build:`
-  split nor a declared exemption — it names the offender and won't start.
-- **A subagent can ask exactly one question, before it builds.** It writes the question to a file
-  and exits 3; the run halts and prints the question verbatim. You answer by *editing the slice's
-  task string* and re-invoking — so the answer lands where the next cold session reads it too.
-- **Doc, example, and fixture slices run a weaker gate,** single-agent, witnessed only by the
-  whole-tree check — and the stamp says `single-agent` so a reader three weeks later knows no
-  independent check existed.
-- **It commits per slice, and never pushes mid-run.** Two commits per two-agent slice (check, then
-  build plus the stamped plan file) and one per single-agent slice, each tagged with the slice id.
-  Resume reads `git log`, not the ` ✅` markers.
-- **One plan, one branch.** Before slice 1 it cuts `feat/<plan-slug>` off your default branch. If
-  you're standing on some *other* branch it refuses to start, because landing a plan on top of
-  unrelated work is a decision it shouldn't make for you — `--current-branch` says you meant it.
-  Resuming after a halt needs no flag: the branch already carries the plan's slice commits, which
-  is how the run recognises its own branch.
-- **On a clean completion it ships: push, PR, stop.** It hands off to `/ship` — push the branch,
-  open a pull request, never merge. Invoking `/run-plan` is the approval for that one push, and it
-  does not carry past the run. Pass `--no-ship` to suppress it and end with the commits sitting on
-  the branch. `--no-ship` does not turn off the branching — those are separate concerns. It skips
-  shipping entirely after a halt of either kind — nothing is finished, so there is nothing to open.
-- **It ends by invoking `/wrap-up` itself** — once per run, not per slice — so the run finishes by
-  handing you the reconciliation seat with the report already on screen.
-
-On a clean completion, the last thing the run reports is a **quality-pass recommendation** — it
-recommends, it never runs it. In Claude Code: `/simplify <first-slice-sha>^..HEAD`, then re-run
-the plan's `> Check:` command, then `/code-review`. That order matters, because simplify rewrites
-and review reads, so reviewing first means reviewing code that is about to change. The range is
-required: the run committed every slice, so a bare `/simplify` looks at a clean working tree and
-reports the code is already fine. In Codex, the review half is the built-in `/review` (it takes
-`--base <branch>`, `--commit <sha>`, `--uncommitted`); there is no built-in simplifier, so ask for
-the cleanup as a plain prompt over the same commit range. On a surface with neither, the run stays
-quiet rather than printing a command you can't run.
-
-The PR is already open by then, on purpose: its first state is exactly the work the gate witnessed,
-so anything the quality pass changes lands as a follow-up commit a reviewer can tell apart. Push
-again once you've accepted those edits — `/ship` adds to the same PR rather than opening a second.
-
-Two requirements: the driving surface needs **real subagents** (Claude Code today, not Codex), and
-the repo needs a whole-tree check command that can exit non-zero. A repo with no check has no
+The repo needs a whole-tree check command that can exit non-zero. A repo with no check has no
 witness, and the gate refuses to run there.
 
 ## Design principles
@@ -249,7 +210,7 @@ witness, and the gate refuses to run there.
 - **Execution is delegated, not merged into planning.** Fresh sessions get one task string and a
   verification gate.
 - **Green is an exit code, not an opinion.** The party that verifies a slice has no stake in it,
-  and what it reads is a process exit status — never an agent's report that the work is done.
+  and what it reports is a process exit status — never an agent's claim that the work is done.
 - **One next action.** `/standup` and `/pjm` avoid menus; the nearest finish line wins.
 - **State lives in the repo.** `docs/ideas/`, `docs/notes/`, `docs/plans/`, and
   `docs/defects/` are the durable memory.

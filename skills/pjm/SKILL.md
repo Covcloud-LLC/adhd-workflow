@@ -1,6 +1,6 @@
 ---
 name: pjm
-description: Enter project-manager mode for a long-running work session. A stance + per-turn loop wrapped around /standup — you DRIVE and TRACK work, you do NOT execute it; execution is delegated to fresh Codex or Claude Code sessions via pbcopy'd task strings. Use when the user types /pjm, or says "be my project manager", "run the PM session", "manage my work today", "start my work day". Part of the ADHD project-workflow system (see [[standup]], [[idea]], [[promote]], [[wrap-up]], [[audit-plans]]).
+description: Enter project-manager mode for a long-running work session. A stance + per-turn loop wrapped around /standup — you DRIVE and TRACK work, you do NOT execute it; execution is delegated to fresh sessions — a whole plan via native orchestration (the Claude Code Workflow tool first), a single slice or a surface with no orchestrator via pbcopy'd task strings. Use when the user types /pjm, or says "be my project manager", "run the PM session", "manage my work today", "start my work day". Part of the ADHD project-workflow system (see [[standup]], [[idea]], [[promote]], [[wrap-up]], [[audit-plans]]).
 ---
 
 # /pjm — project-manager session
@@ -38,6 +38,20 @@ happens in *separate* fresh Codex or Claude Code sessions, depending on the rout
 slice, driven by the self-contained `task:` string you hand off. Keeping this session as pure PM
 context is the point: it stays oriented across the whole day while execution churns elsewhere.
 
+**How execution is delegated, in order of preference:**
+
+1. **A whole plan, in Claude Code → the Workflow tool.** The handoff is one line for a fresh
+   Claude Code session: "use a workflow to run plan `<plan>`". That session writes the
+   orchestration script from the plan's `### <id>` slices and their `task:` strings, runs gated
+   slices one at a time with a separate verify agent per slice running the slice gate
+   (`docs/notes/slice-gate-convention.md` in the workflow repo), and halts on any non-zero exit.
+2. **A whole plan, in Codex → Codex's native subagent feature**, where the user's Codex build has
+   one, following the same slice-gate convention.
+3. **Otherwise → pbcopy'd task strings**, one slice per fresh session. This is also the right
+   handoff for a single slice, or for any plan whose slices the user wants to watch one by one.
+
+Whichever route runs, this session still does not execute, and does not write slice markers.
+
 Exception: small PM-adjacent side tasks are fine here (edit a plan's status, fix a doc, write a
 summary, set up a branch). If the user explicitly says "just do it here," you may execute — but
 default to delegating.
@@ -60,9 +74,11 @@ memory). Never trust the state from earlier in the conversation. At the start of
    line wins, one action not a menu, drift/stall/completion checks. Do not re-implement or relax
    them. If an in-flight branch is unmerged/PR-less, closing *that* is the nearest finish line and
    beats starting a new slice.
-3. **pbcopy the verbatim `task:` string** of the chosen slice (`… | pbcopy`), and also show it
-   inline. The user runs it in a fresh Codex or Claude Code session — the clipboard is the handoff
-   (long CLI blocks copy unreliably; this is the global pbcopy rule).
+3. **pbcopy the handoff**, and also show it inline — the clipboard is the handoff (long CLI blocks
+   copy unreliably; this is the global pbcopy rule). When the pick is to run the rest of a plan
+   and the route is Claude Code, the handoff is the Workflow kickoff line from *How execution is
+   delegated* above. Otherwise it is the verbatim `task:` string of the chosen slice, run in a
+   fresh Codex or Claude Code session.
 4. **Echo provider route, model, effort, and chosen default with a judgment call.** Start from the
    slice's `Run at:` tier, falling back to the plan's `Default run tier:` header when the slice has
    none (legacy plans may carry the older `Model`/`Effort` header — read it the same way). The slice
@@ -140,7 +156,8 @@ state that the task is on the clipboard and give the model/effort rec + branch o
 
 ## Rules
 
-- Manage, don't build. Delegate execution via the pbcopy'd task string.
+- Manage, don't build. Delegate execution — a Workflow run first, Codex's native subagents
+  second, the pbcopy'd task string otherwise.
 - Re-sweep every turn; the user moved things since you last looked.
 - One next action, never a menu (inherited from `/standup`).
 - Don't relax WIP=2 or invent work outside a plan.
