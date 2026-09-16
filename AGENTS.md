@@ -70,7 +70,7 @@ Changing any of these means changing several skills at once:
 | Convention | Meaning | Written by | Read by |
 |---|---|---|---|
 | `reasoned:` frontmatter stamp on an idea | passed the reasoning gate | `/reason` | `/promote` |
-| trailing ` ✅` on a `### <id>` slice heading | that slice is done | `/wrap-up` | `/standup` |
+| trailing ` ✅` on a `### <id>` slice heading | that slice is done — bare = hand-confirmed; ` ✅ (<command>, <sha>)` or ` ✅ (<command>, single-agent)` = gate-witnessed | `/wrap-up` (bare); the session that launched a gated workflow run (stamped) | `/standup` |
 | `> Default run tier:` header on a plan | both provider routes + effort, for slices with no override | `/promote` | `/standup`, `/pjm`, `/audit-plans` |
 | `> Run at:` line on a slice | the tier that slice runs at; always beats the plan default | `/promote` | `/standup`, `/pjm` |
 | WIP cap of 2 `in-progress` plans | the finish-what-you-start rule | — | `/standup` (the only place a plan goes `in-progress`) |

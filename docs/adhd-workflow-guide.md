@@ -203,7 +203,8 @@ Pasting one task string per slice is fine for a slice or two. For a whole plan, 
 your agent tool's own orchestration instead. In order of preference:
 
 1. **Claude Code — the Workflow tool.** In a fresh session, say "use a workflow to run plan
-   `<plan>`". The session writes a small script from the plan's slices and task strings, and
+   `<plan>`". The session cuts a branch for the plan, writes a small script from the plan's slices
+   and task strings, and
    Claude Code runs that script as code. Because the loop is code, it doesn't drift: it runs the
    slices in order, stops at the first red, and never retries. A halted run resumes by its run ID.
 2. **Codex — its native subagent feature**, if your Codex build has one.
@@ -220,7 +221,8 @@ rest is yours to run: `/ship` to push and open a PR, then a quality pass — tid
 `/simplify`, re-run the repo's own check, then read it over with `/code-review`. Give `/simplify`
 the commit range the run produced (`<first-slice-sha>^..HEAD`): the run committed every slice,
 so a bare `/simplify` would look at an empty working tree and tell you the code is already clean.
-Both commands are Claude Code's. If a run halted, skip the polish and fix the halt first.
+If you accept simplify's changes, the ` ✅` stamps on those slices now describe code that has
+since changed — which is why you re-run the check in between. Both commands are Claude Code's. If a run halted, skip the polish and fix the halt first.
 
 ### Worktrees: keeping parallel sessions out of each other's way
 

@@ -75,10 +75,13 @@ memory). Never trust the state from earlier in the conversation. At the start of
    them. If an in-flight branch is unmerged/PR-less, closing *that* is the nearest finish line and
    beats starting a new slice.
 3. **pbcopy the handoff**, and also show it inline — the clipboard is the handoff (long CLI blocks
-   copy unreliably; this is the global pbcopy rule). When the pick is to run the rest of a plan
-   and the route is Claude Code, the handoff is the Workflow kickoff line from *How execution is
-   delegated* above. Otherwise it is the verbatim `task:` string of the chosen slice, run in a
-   fresh Codex or Claude Code session.
+   copy unreliably; this is the global pbcopy rule). When the pick is to run the rest of a plan,
+   the handoff depends on the chosen route: **Claude Code** → the Workflow kickoff line from *How
+   execution is delegated* above; **Codex, with a native subagent feature** → the same kickoff
+   phrased for Codex ("use subagents to run plan `<plan>`, following the slice-gate convention");
+   **Codex without one, or any other surface** → the verbatim `task:` string of the plan's first
+   open slice. For a single-slice pick, it is always the verbatim `task:` string, run in a fresh
+   Codex or Claude Code session.
 4. **Echo provider route, model, effort, and chosen default with a judgment call.** Start from the
    slice's `Run at:` tier, falling back to the plan's `Default run tier:` header when the slice has
    none (legacy plans may carry the older `Model`/`Effort` header — read it the same way). The slice

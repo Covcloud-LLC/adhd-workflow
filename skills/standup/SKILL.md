@@ -28,7 +28,7 @@ If the user passes an argument (`/standup <term>`) — other than the `--board` 
 2. From the hits, place the item in the lifecycle: captured (idea only) → reasoned (idea has a `reasoned:` stamp / a reasoning note exists) → promoted (plan exists, `todo`) → in-progress (plan `in-progress` / matching branch) → done (in `_done/`); defects layer on top (open / diagnosed / fixed).
 3. Report the position in one line (e.g. "reasoned, unpromoted") plus the evidence paths, and
    name the **SINGLE next command** in the lifecycle (`/reason`, `/promote`, plain `/standup` for
-   the global start/pick, "use a workflow to run plan `<plan>`" (Claude Code) for driving a named plan to completion, `/diagnose`,
+   the global start/pick, "use a workflow to run plan `<plan>`" in Claude Code — or "use subagents to run plan `<plan>`" in Codex where it has native subagents, else the first open slice's `task:` string — for driving a named plan to completion, `/diagnose`,
    `/wrap-up`, …). No board output, no `▶ NEXT` pick.
 4. Trace mode is read-only. It must not flip `todo`→`in-progress`, mark a slice done, archive a plan, select a repo-wide `▶ NEXT`, or treat `/standup <plan>` as a request to start or advance that plan. Starting a plan remains a confirmed action from the normal global standup pick, and slice completion remains `/wrap-up`.
 5. If nothing matches, say so and suggest the closest-named items found.

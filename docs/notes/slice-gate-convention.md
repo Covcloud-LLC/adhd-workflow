@@ -43,30 +43,54 @@ Resolve it through any installed skill's symlink: `readlink ~/.claude/skills/pro
 
 ## One slice as Workflow steps
 
+**Before slice 1, the launching session cuts a branch.** On a clean tree, cut
+`feat/<plan-slug>` off the default branch and run the workflow there — never on the default branch
+itself. A run that commits every slice onto the default branch cannot become a PR afterwards
+without moving commits, and `/ship` on a clean default branch would push it directly. If `HEAD` is
+some other branch that does not already carry this plan's `<slice-id>:` commits, stop and ask:
+landing a plan on top of unrelated work is the user's decision.
+
 For a slice with a Check/Build split:
 
 1. Agent A gets only the Check text and writes the check. It implements nothing.
 2. Derive A's check paths with `git status --porcelain -uall`. Without `-uall`, git collapses a
    new untracked directory to one line, the check path becomes the whole directory, and agent B's
    implementation inside it then fails fact five by construction.
-3. Commit A's check alone (use `--no-verify`: a pre-commit typecheck fails by construction on a
-   red check). Record that sha.
+3. The verify agent commits A's check alone, message `<slice-id>: check` (use `--no-verify`: a
+   pre-commit typecheck fails by construction on a red check), and returns that sha — `sha-A` — in
+   its schema result.
 4. Verify agent runs `slice-gate.sh preflight <check-cmd> <check-paths…>`. The script halts unless
    the exit is **0** (genuine red). 1 = vacuous green, 2 = harness error; both halt.
 5. Agent B gets only the Build text and implements.
 6. Verify agent runs `slice-gate.sh postflight <check-cmd> <tree-cmd> <check-paths…> <sha-A>`. The
    script halts unless the exit is **0**.
-7. Commit the slice with its id in the message.
+7. The same verify agent commits the build, message `<slice-id>: build`, and returns that sha.
+   Commits are the verify agent's job because it is the one agent whose only work is mechanical;
+   A and B never commit.
 
 For a slice whose task string names a red-gate exemption (doc, spike, design, below the red-gate
 threshold): one agent does the work, a verify agent runs the whole-tree check, and the script
-halts unless it exits 0. The stamp says `single-agent`.
+halts unless it exits 0 and then commits the slice (`<slice-id>: build`). The stamp says
+`single-agent`.
 
-On any halt: stop, leave the tree as it is, never retry. The user fixes the plan or the code and
-resumes the workflow by run ID.
+On any halt: stop, leave the tree as it is, never retry. The last `<slice-id>: build` commit is the
+last finished slice — that is the resume point, whether or not any marker was written. The user
+fixes the plan or the code, commits the fix or resets to that commit, and resumes the workflow by
+run ID on a clean tree.
 
-**Who writes the marker.** No slice agent writes the plan file. After the workflow returns, the
-session that launched it writes each stamp from the returned results, matching the slice by id.
+**Who writes the marker, and who commits it.** No slice agent writes the plan file. The workflow
+returns, per slice, its id, lane, check command, `sha-A`, and build sha. After it returns — clean
+or halted — the session that launched it writes each finished slice's stamp, matching the slice by
+id and re-reading the plan first. Then it commits the stamps: when the plan lives in a backlog
+metarepo, the metarepo write rule already commits and pushes them; when the plan lives in the code
+repo, commit them as one `<plan-slug>: stamp slices` commit on the run's branch, so the tree is
+clean for the next resume or for `/ship`. A stamp that never gets written loses nothing: the
+commits still record the work, and `/wrap-up` can confirm the slice by hand.
+
+**After the run, a quality pass changes the witnessed tree.** If the user runs `/simplify` over
+the run's commits and accepts its edits, each stamp's `(<command>, <sha>)` describes a tree that
+no longer exists. Re-run the plan's `> Check:` command after accepting them; leave the stamps as
+they are — they record what the gate saw, at that sha — and review last.
 
 **Gated slices of one plan run serially, in one tree.** A whole-tree check that was green before a
 slice and red after it blames that slice — but only when slices run one at a time on the same

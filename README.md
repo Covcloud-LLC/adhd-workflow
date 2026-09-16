@@ -194,9 +194,12 @@ witnessed only by the whole-tree check, and their stamp says `single-agent`. Gat
 plan run one at a time in one tree: a whole-tree check only blames the slice that broke it when
 nothing else changed at the same time.
 
-When the run finishes, the rest is yours: `/ship` to push and open a PR, then a quality pass —
-`/simplify <first-slice-sha>^..HEAD`, re-run the plan's `> Check:` command, then `/code-review`
-(simplify rewrites and review reads, so review last). Then `/wrap-up`.
+The session cuts a `feat/<plan-slug>` branch before slice 1, so the run never commits onto your
+default branch. When the run finishes, the rest is yours: `/ship` to push and open a PR, then a
+quality pass — `/simplify <first-slice-sha>^..HEAD`, re-run the plan's `> Check:` command, then
+`/code-review` (simplify rewrites and review reads, so review last). If you accept simplify's
+edits, each slice's ` ✅ (<command>, <sha>)` stamp now describes a tree that no longer exists —
+that is why the check runs again between the two. Then `/wrap-up`.
 
 The repo needs a whole-tree check command that can exit non-zero. A repo with no check has no
 witness, and the gate refuses to run there.
