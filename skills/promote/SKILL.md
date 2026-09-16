@@ -77,7 +77,7 @@ must pass.
 > Status: **todo** · created <YYYY-MM-DD>
 > Default run tier: **<Claude friendly-name> · <effort>** (`<claude-slug>`) · Codex **<OpenAI friendly-name> · <effort>** (`<openai-slug>`) — **each slice overrides this**; read the `Run at:` line on the slice you are starting.
 > Red-gate: yes   <!-- optional: opt a medium plan into the red-gate rule; omit otherwise -->
-> Check: <whole-tree check command, e.g. pnpm test>   <!-- the repo's whole-tree check; required for /run-plan to drive the plan -->
+> Check: <whole-tree check command, e.g. pnpm test>   <!-- the repo's whole-tree check; required for a gated workflow run -->
 > Why: <one line>
 
 ## Run tiers at a glance
@@ -123,21 +123,21 @@ human skimming this a week from now>
 ```
 
 **A slice IS its `### <ID>-<n> — <title>` heading.** The whole toolchain keys on that heading:
-`/run-plan` and `/wrap-up` append the ` ✅` done marker to it, `/standup` and `/pjm` pick the
-first heading without one. A slice written any other way is invisible to all four. Status and
+a gated workflow run and `/wrap-up` append the ` ✅` done marker to it, `/standup` and `/pjm`
+pick the first heading without one. A slice written any other way is invisible to all of them. Status and
 dependencies live on the `> status: <status> · depends: <...>` line directly under the heading —
 never inline in the heading itself. (An older bold dialect — `**<ID>-n — <title>** · todo ·
 depends: none` as a paragraph line — exists in legacy plans; it is readable history, but never
 emit it. `/audit-plans` flags it for migration.)
 
 The `Check:` header names the command that proves the whole tree still works (build + full test
-suite). `/run-plan` refuses to drive a plan without it — no whole-tree check means no witness
-that a slice broke nothing. It is optional for plans that will only ever be hand-run.
+suite). A gated workflow run needs it — no whole-tree check means no witness that a slice broke
+nothing (the slice-gate convention). It is optional for plans that will only ever be hand-run.
 
 **The command must already resolve in the tree as it stands today** — not after slice 1 lands.
-`/run-plan` step 0 runs it once before the first slice and refuses on exit 126/127 ("this repo has
-no witness"), so a header naming a harness the plan itself builds makes the plan unrunnable from
-its own first line. In a repo with no whole-tree command yet, naming the one the plan is about to
+A workflow run checks it before the first slice, and exit 126/127 means "this repo has no
+witness", so a header naming a harness the plan itself builds makes the plan unrunnable from its
+own first line. In a repo with no whole-tree command yet, naming the one the plan is about to
 create is the natural thing to write — which is exactly why this needs saying.
 
 **Probe it before the plan is written.** During the read-back (step 4), run the candidate `Check:`
@@ -149,13 +149,13 @@ command once — directly, never through a pipe — and read `$?` immediately:
   slice 1 has not created yet), or drop the header and say in the plan that it is hand-run only.
   Show the user which you did, in the read-back message.
 - **any other non-zero** — the tree is red today. Write the header, and add one line to the
-  read-back: `/run-plan` refuses a red baseline too, so the tree has to be green before this plan
-  can be driven. That is a warning, not a refusal — a plan whose whole job is fixing that red is
+  read-back: a gated run cannot attribute a break to a slice on a red baseline, so the tree has
+  to be green before this plan can be driven. That is a warning, not a refusal — a plan whose whole job is fixing that red is
   legitimate.
 - **0** — green baseline. Say nothing.
 
-This is the same command `/run-plan` step 0 runs; paying for it here turns a two-refusal round
-trip into a one-line edit before anything is committed.
+This is the same command a workflow run checks first; paying for it here turns a refused run
+into a one-line edit before anything is committed.
 
 Use a short uppercase ID prefix derived from the slug. Statuses used across the system: `todo` · `in-progress` · `blocked` · `done`. Match whatever the repo's existing plans already use if they differ.
 
@@ -248,17 +248,17 @@ witnessed by a party with no stake in it (the slice-gate convention —
 
 For red-gated tasks, `Verify:` must be a **runnable command that names the check** — e.g.
 `Verify: pnpm test -t "XLCT-1"` or `Verify: bash tests/gate_test.sh` — never a description of
-a test to be written. `/run-plan` executes exactly this command as the gate's preflight and
-postflight; a `Verify:` it cannot execute halts the plan at validation, before slice 1 runs.
+a test to be written. The slice gate executes exactly this command as its preflight and
+postflight; a `Verify:` it cannot execute halts the run.
 
-**One command, and hermetic.** `/run-plan` hands the `Verify:` string to `slice-gate.sh` as a
+**One command, and hermetic.** A workflow run hands the `Verify:` string to `slice-gate.sh` as a
 single command, so two commands joined by "and" is not a verify — it is a string the gate cannot
 run. Neither is anything reaching outside the repo: a live clone, a running service, a network
 call. The gate runs the command twice, red then green, and a non-hermetic result is not
 attributable to the slice. Work that needs either goes on its own line in the plan — "manual smoke
 test after the plan lands" — never inside `Verify:`.
 
-When a red-gated slice is **hand-run** instead (no `/run-plan`), the execution session keeps
+When a red-gated slice is **hand-run** instead (no workflow run), the execution session keeps
 the same discipline through the split: author the Check first, run it, state **"confirmed
 red"**, then do the Build.
 
@@ -280,16 +280,16 @@ TDD (no micro-cycles, no delete-premature-code rule) per the reasoning note.
 
 ### Every slice in a `Check:` plan declares its lane
 
-A plan carrying the whole-tree `> Check:` header is a plan meant to be driven by `/run-plan`, and
-`/run-plan` step 0 requires **every open slice** to be one of two things: a Check/Build split with
-a runnable `Verify:`, or a slice whose task string **names an exemption**. A slice that is neither
-does not just fail itself — step 0 refuses before slice 1, so one unlaned slice at position 3
-blocks slices 1 and 2 as well.
+A plan carrying the whole-tree `> Check:` header is a plan meant to be driven by a gated workflow
+run, and the run's script branches on each open slice's lane: a Check/Build split with a runnable
+`Verify:` runs the two-agent gate, and a slice whose task string **names an exemption** runs the
+single-agent lane. A slice that is neither has no lane — the session writing the script has to
+guess, or stop. Check every slice before the run starts, so one unlaned slice at position 3 does
+not halt a run after slices 1 and 2 are committed.
 
 That is where the trigger above leaves a gap, and it is worth naming plainly rather than
 discovering at run time. The red-gate trigger reads the **slice's own** effort, so a `medium` slice
-in a `high` plan correctly gets no Check/Build split — and then gets refused by `/run-plan` for
-having none. Following this rule exactly is what produces the unrunnable plan; knowing the rule
+in a `high` plan correctly gets no Check/Build split — and then has no lane in a gated run. Following this rule exactly is what produces the unrunnable plan; knowing the rule
 does not protect you.
 
 So in a `Check:`-carrying plan, a slice that ends up with no Check/Build split must **say why, in
@@ -302,7 +302,7 @@ its task string**. Two honest ways out, in order of preference:
    string in the same voice as the category exemptions above:
    `**Exemption: below the red-gate threshold (medium) — witness is the whole-tree Check: command.**`
 
-Never leave it implicit. `/run-plan` reads an unlaned slice as an authoring defect, which is what
+Never leave it implicit. A gated run treats an unlaned slice as an authoring defect, which is what
 it is; a human reads it as a slice nobody thought about. Naming it makes the weaker gate a choice
 someone made, not an inference someone's tooling drew.
 

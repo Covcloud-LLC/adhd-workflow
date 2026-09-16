@@ -168,7 +168,7 @@ Override the defaults when:
 7. A rule fights CLAUDE.md. The user's own instructions win. In particular: open-ended
    architecture and design discussions stay conversational — a sketch plus a few focused prose
    questions, not an action-first command list.
-8. An ADHD-workflow skill (`/standup`, `/run-plan`, `/wrap-up`, `/promote`, …) defines its own
+8. An ADHD-workflow skill (`/standup`, `/wrap-up`, `/promote`, …) defines its own
    report format. That format wins; these rules shape only the prose around it.
 
 ## Pre-send check

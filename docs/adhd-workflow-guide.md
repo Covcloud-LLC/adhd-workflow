@@ -28,7 +28,7 @@ either way, it reads and writes the current repo's `docs/`.
 | **Ideate** | `/idea` | Dump a raw thought to disk and get out of the way. | `docs/ideas/` |
 | **Reason** | `/reason` | Decide if the idea is sound and how much thinking it needs. | a stamp on the idea (+ maybe a reasoning note, wherever your other lifecycle docs live) |
 | **Plan** | `/promote` | Turn a reasoned idea into a well-formed, runnable plan. | `docs/plans/` |
-| **Execute** | *(fresh session)* | Run the plan's task strings and build the thing. | code |
+| **Execute** | *(fresh session)* or a workflow run | Run the plan's task strings and build the thing — one slice per fresh session, or a whole plan through your agent tool's native orchestration. | code |
 | **Validate** | `/wrap-up` / `$wrap-up` | Confirm it's done, capture what you learned, hand back to the driver. | plan status + memory |
 
 Two helper triggers sit alongside these:
@@ -195,23 +195,34 @@ build.
 - `/pjm` is a project-manager session you keep open for the day. It re-checks the state every
   turn (you move things between turns), runs the standup pick, puts the task string on your
   clipboard, and tells you which provider route, model, and effort to run it at. It manages; it
-  doesn't build. `/run-plan <plan>` is the autonomous runner: it drives the same plan through all
-  its open slices, serially, with no human between them, then pushes the branch and opens a PR.
+  doesn't build.
 
-When a run finishes clean, that only proves the tree is green — not that the code is good. So a
-run that actually landed a slice ends by recommending a quality pass, not by doing one: tidy the
-code with `/simplify`, re-run the repo's own check, then read it over with `/code-review`. The
-run already committed every slice, so it hands you the `/simplify` command with the commit range
-filled in — a bare `/simplify` would look at an empty working tree and tell you the code is
-already clean. That's a recommendation for you to run yourself afterward — the runner names the
-steps and stops there. Both commands are Claude Code's; this is the one place the walkthrough
-describes a Claude-only path, and on a Codex run the runner stays quiet rather than name a
-command you don't have.
+### Running a whole plan: native orchestration
 
-Two kinds of run skip the offer. A halted one (a red check, or a question it couldn't answer)
-skips it because the tree is left unfinished — earlier slices may well have landed, but the next
-thing to do is fix the halt, not polish around it. And a resume that finds every slice already
-done skips it because nothing changed.
+Pasting one task string per slice is fine for a slice or two. For a whole plan, hand the loop to
+your agent tool's own orchestration instead. In order of preference:
+
+1. **Claude Code — the Workflow tool.** In a fresh session, say "use a workflow to run plan
+   `<plan>`". The session cuts a branch for the plan, writes a small script from the plan's slices
+   and task strings, and
+   Claude Code runs that script as code. Because the loop is code, it doesn't drift: it runs the
+   slices in order, stops at the first red, and never retries. A halted run resumes by its run ID.
+2. **Codex — its native subagent feature**, if your Codex build has one.
+3. **Otherwise — paste task strings** into fresh sessions, one slice at a time, as above.
+
+Each slice that has a check is gated by this repo's **slice gate** (`scripts/slice-gate.sh`): one
+agent writes a failing check, a second agent writes the code, and a third agent runs the gate and
+reports its exit code. The slice only counts as done if the check went from red to green, the
+whole repo's check still passes, and nobody touched the check along the way. Doc and other
+exempt slices get a lighter version: the whole-repo check only.
+
+When the run finishes clean, that only proves the tree is green — not that the code is good. The
+rest is yours to run: `/ship` to push and open a PR, then a quality pass — tidy the code with
+`/simplify`, re-run the repo's own check, then read it over with `/code-review`. Give `/simplify`
+the commit range the run produced (`<first-slice-sha>^..HEAD`): the run committed every slice,
+so a bare `/simplify` would look at an empty working tree and tell you the code is already clean.
+If you accept simplify's changes, the ` ✅` stamps on those slices now describe code that has
+since changed — which is why you re-run the check in between. Both commands are Claude Code's. If a run halted, skip the polish and fix the halt first.
 
 ### Worktrees: keeping parallel sessions out of each other's way
 
